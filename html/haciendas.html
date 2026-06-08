@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EQUIBOV — Haciendas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../img/torito.png" />
+  <link href="../css/equibov.css" rel="stylesheet" />
+  <style>
+    .detail-panel { position: fixed; top: 0; right: -420px; width: 420px; height: 100vh; background: var(--white); border-left: 1px solid var(--bone); z-index: 150; display: flex; flex-direction: column; transition: right 0.3s ease; overflow-y: auto; }
+    .detail-panel.open { right: 0; }
+    .detail-header { padding: 28px 28px 20px; border-bottom: 1px solid var(--bone); display: flex; align-items: flex-start; justify-content: space-between; }
+    .detail-header h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; }
+    .detail-header p  { font-size: 10px; color: var(--mid); margin-top: 4px; letter-spacing: 0.06em; }
+    .btn-close { background: none; border: none; font-size: 18px; color: var(--light); cursor: pointer; padding: 0; line-height: 1; }
+    .btn-close:hover { color: var(--carbon); }
+    .detail-section { padding: 20px 28px; border-bottom: 1px solid rgba(211,209,199,0.4); }
+    .detail-section-label { font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mid); margin-bottom: 12px; }
+    .toro-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(211,209,199,0.3); }
+    .toro-item:last-child { border-bottom: none; }
+    .toro-item .toro-name { font-size: 12px; color: var(--carbon); }
+    .toro-item .toro-meta { font-size: 10px; color: var(--light); }
+    .panel-overlay { display: none; position: fixed; inset: 0; background: rgba(44,44,42,0.2); z-index: 140; }
+    .panel-overlay.open { display: block; }
+
+    .table-wrap { opacity: 0; animation: fadeUp 0.45s ease 0.12s forwards; }
+    .detail-panel.open { animation: fadeUp 0.3s ease; }
+
+    @media (max-width: 768px) {
+      .detail-panel { width: 100%; right: -100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .table-wrap { opacity: 1; animation: none; }
+      tr { opacity: 1 !important; animation: none !important; }
+      .detail-panel.open { opacity: 1; animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar injected by js/sidebar.js -->
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Haciendas</h2>
+        <p id="totalLabel">Cargando...</p>
+      </div>
+      <button class="btn-primary" id="btnNuevo">+ Nueva hacienda</button>
+    </div>
+
+    <div class="toolbar">
+      <input class="search-input" type="text" id="searchInput" placeholder="Buscar por nombre o ubicación..." />
+      <select class="filter-select" id="filterPropietario">
+        <option value="">Todos los propietarios</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hacienda</th>
+            <th>Propietario</th>
+            <th>Ubicación</th>
+            <th>Toros</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tablebody">
+          <tr><td colspan="5"><div class="loading-state">Cargando haciendas...</div></td></tr>
+        </tbody>
+      </table>
+      <div class="pagination" id="pagination">
+        <button class="page-btn" id="pagePrev" disabled>← Anterior</button>
+        <div id="pageNumbers"></div>
+        <button class="page-btn" id="pageNext" disabled>Siguiente →</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- PANEL DETALLE -->
+  <div class="panel-overlay" id="panelOverlay"></div>
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+      <div>
+        <h3 id="detailNombre">—</h3>
+        <p id="detailPropietario">—</p>
+      </div>
+      <button class="btn-close" id="btnClosePanel">✕</button>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-label">Ubicación</div>
+      <div id="detailUbicacion" style="font-size:12px; color:var(--mid);">—</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-label">Toros registrados</div>
+      <div id="detailToros"><div class="loading-state">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- MODAL CREAR / EDITAR -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 id="modalTitle">Nueva hacienda</h3>
+      <div class="field-group">
+        <label class="field-label" for="fNombre">Nombre de la hacienda *</label>
+        <input class="field-input" type="text" id="fNombre" placeholder="Ej: El Barzal" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="fUbicacion">Ubicación</label>
+        <input class="field-input" type="text" id="fUbicacion" placeholder="Ej: Montería, Córdoba" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="fPropietario">Propietario *</label>
+        <select class="field-input" id="fPropietario">
+          <option value="">Seleccionar propietario...</option>
+        </select>
+      </div>
+      <div class="error-msg" id="modalError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btnCancelar">Cancelar</button>
+        <button class="btn-primary" id="btnGuardar">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/toast.js"></script>
+  <script>
+    let allData     = [];
+    let propietarios = [];
+    let editingId   = null;
+    let currentUser = null;
+    const PAGE_SIZE = 20;
+    let currentPage = 1;
+
+    function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+    async function init() {
+      document.body.insertAdjacentHTML('afterbegin', createSidebar('haciendas'));
+      const session = await checkSession();
+      if (!session) return;
+      currentUser = session.user;
+      document.getElementById('userEmail').textContent = currentUser.email;
+      document.getElementById('btnLogout').addEventListener('click', logout);
+      await loadPropietarios();
+      await loadHaciendas();
+    }
+
+    async function loadPropietarios() {
+      const { data } = await sb.from('propietarios').select('id, nombre').order('nombre');
+      propietarios = data || [];
+      // Poblar filtro y select del modal
+      const filterSel = document.getElementById('filterPropietario');
+      const formSel   = document.getElementById('fPropietario');
+      propietarios.forEach(p => {
+        filterSel.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+        formSel.innerHTML   += `<option value="${p.id}">${p.nombre}</option>`;
+      });
+    }
+
+    async function loadHaciendas() {
+      const { data, error } = await sb
+        .from('haciendas')
+        .select('*, propietarios(nombre), toros(id)')
+        .order('nombre');
+      if (error) { renderError(); return; }
+      allData = data || [];
+      paginateAndRender(allData);
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tablebody');
+
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Sin haciendas registradas aún</div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.map((h, i) => {
+        const delay = (0.08 + i * 0.035).toFixed(3);
+        const prop    = h.propietarios?.nombre || '&mdash;';
+        const numToros = h.toros?.length ?? 0;
+        return `
+          <tr style="opacity:0;animation:fadeUp 0.3s ease ${delay}s forwards;">
+            <td data-label="Hacienda"><strong>${h.nombre}</strong></td>
+            <td data-label="Propietario"><span class="prop-chip">${prop}</span></td>
+            <td data-label="Ubicaci\u00f3n" class="secondary">${h.ubicacion || '&mdash;'}</td>
+            <td data-label="Toros"><span class="badge">${numToros} toro${numToros !== 1 ? 's' : ''}</span></td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-icon view-btn" onclick="openDetail('${h.id}')">ver toros</button>
+                <button class="btn-icon" onclick="openEdit('${h.id}')">editar</button>
+                <button class="btn-icon danger" onclick="deleteHac('${h.id}','${h.nombre.replace(/'/g,"\\'")}')">eliminar</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function renderError() {
+      document.getElementById('tablebody').innerHTML =
+        `<tr><td colspan="5"><div class="empty-state">Error al cargar datos</div></td></tr>`;
+    }
+
+    // ── PAGINACIÓN ──
+    function paginateAndRender(fullData) {
+      const total = fullData.length;
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const slice = fullData.slice(start, start + PAGE_SIZE);
+
+      document.getElementById('totalLabel').textContent =
+        `${total} hacienda${total !== 1 ? 's' : ''} registrada${total !== 1 ? 's' : ''}`;
+
+      renderTable(slice);
+      renderPagination(total);
+    }
+
+    function renderPagination(total) {
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      document.getElementById('pagePrev').disabled = currentPage <= 1;
+      document.getElementById('pageNext').disabled = currentPage >= totalPages;
+
+      let html = '';
+      const range = 2;
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+          html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        } else if (html.endsWith('...</span>') === false && (i === currentPage - range - 1 || i === currentPage + range + 1)) {
+          html += `<span class="page-info">...</span>`;
+        }
+      }
+      document.getElementById('pageNumbers').innerHTML = html;
+    }
+
+    function goToPage(n) {
+      currentPage = n;
+      paginateAndRender(allData);
+    }
+
+    document.getElementById('pagePrev').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; paginateAndRender(allData); }
+    });
+    document.getElementById('pageNext').addEventListener('click', () => {
+      const totalPages = Math.ceil(allData.length / PAGE_SIZE) || 1;
+      if (currentPage < totalPages) { currentPage++; paginateAndRender(allData); }
+    });
+
+    // BÚSQUEDA Y FILTRO
+    function applyFilters() {
+      const q    = document.getElementById('searchInput').value.toLowerCase();
+      const prop = document.getElementById('filterPropietario').value;
+      const filtered = allData.filter(h =>
+        (!q    || h.nombre?.toLowerCase().includes(q) || h.ubicacion?.toLowerCase().includes(q)) &&
+        (!prop || h.propietario_id === prop)
+      );
+      currentPage = 1;
+      paginateAndRender(filtered);
+    }
+    document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 200));
+    document.getElementById('filterPropietario').addEventListener('change', applyFilters);
+
+    // DETALLE PANEL
+    async function openDetail(id) {
+      const h = allData.find(x => x.id === id);
+      if (!h) return;
+      document.getElementById('detailNombre').textContent      = h.nombre;
+      document.getElementById('detailPropietario').textContent = h.propietarios?.nombre || '—';
+      document.getElementById('detailUbicacion').textContent   = h.ubicacion || '—';
+      document.getElementById('detailToros').innerHTML = '<div class="loading-state">Cargando...</div>';
+      document.getElementById('detailPanel').classList.add('open');
+      document.getElementById('panelOverlay').classList.add('open');
+
+      const { data } = await sb
+        .from('toros')
+        .select('id, nombre, numero, raza, edad_meses')
+        .eq('hacienda_id', id)
+        .order('nombre');
+
+      const container = document.getElementById('detailToros');
+      if (!data?.length) {
+        container.innerHTML = '<div style="font-size:11px;color:var(--light);padding:8px 0;">Sin toros registrados</div>';
+        return;
+      }
+      container.innerHTML = data.map(t => `
+        <div class="toro-item">
+          <div>
+            <div class="toro-name">${t.nombre || t.numero}</div>
+            <div class="toro-meta">${t.raza || '—'} · ${t.edad_meses ? t.edad_meses + ' meses' : '—'}</div>
+          </div>
+          <a href="toros.html?id=${t.id}" style="font-size:9px;color:var(--mid);text-decoration:none;letter-spacing:0.1em;">ver →</a>
+        </div>`).join('');
+    }
+
+    function closeDetail() {
+      document.getElementById('detailPanel').classList.remove('open');
+      document.getElementById('panelOverlay').classList.remove('open');
+    }
+    document.getElementById('btnClosePanel').addEventListener('click', closeDetail);
+    document.getElementById('panelOverlay').addEventListener('click', closeDetail);
+
+    // MODAL NUEVO
+    document.getElementById('btnNuevo').addEventListener('click', () => {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Nueva hacienda';
+      document.getElementById('fNombre').value    = '';
+      document.getElementById('fUbicacion').value = '';
+      document.getElementById('fPropietario').value = '';
+      clearModalError();
+      openModal();
+    });
+
+    // MODAL EDITAR
+    function openEdit(id) {
+      const h = allData.find(x => x.id === id);
+      if (!h) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent   = 'Editar hacienda';
+      document.getElementById('fNombre').value    = h.nombre || '';
+      document.getElementById('fUbicacion').value = h.ubicacion || '';
+      document.getElementById('fPropietario').value = h.propietario_id || '';
+      clearModalError();
+      openModal();
+    }
+
+    // GUARDAR
+    document.getElementById('btnGuardar').addEventListener('click', async () => {
+      const nombre       = document.getElementById('fNombre').value.trim();
+      const ubicacion    = document.getElementById('fUbicacion').value.trim();
+      const propietario  = document.getElementById('fPropietario').value;
+
+      if (!nombre)      { showModalError('El nombre es obligatorio.'); return; }
+      if (!propietario) { showModalError('Debe seleccionar un propietario.'); return; }
+
+      const payload = { nombre, ubicacion: ubicacion || null, propietario_id: propietario };
+      let error;
+      if (editingId) {
+        ({ error } = await sb.from('haciendas').update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await sb.from('haciendas').insert({ ...payload, creado_por: currentUser.id }));
+      }
+
+      if (error) { showModalError('Error al guardar. Intente de nuevo.'); return; }
+      closeModal();
+      showToast(editingId ? 'Hacienda actualizada correctamente.' : 'Hacienda creada correctamente.', 'success');
+      loadHaciendas();
+    });
+
+    // ELIMINAR
+    async function deleteHac(id, nombre) {
+      const ok = await showConfirm(`¿Eliminar la hacienda "${nombre}"?<br>Se eliminarán también todos los toros y certificados asociados.`);
+      if (!ok) return;
+      const { error } = await sb.from('haciendas').delete().eq('id', id);
+      if (error) { showToast('Error al eliminar.', 'error'); return; }
+      showToast('Hacienda eliminada correctamente.', 'success');
+      loadHaciendas();
+    }
+
+    function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+    function showModalError(msg) { const el = document.getElementById('modalError'); el.textContent = msg; el.classList.add('visible'); }
+    function clearModalError()   { document.getElementById('modalError').classList.remove('visible'); }
+
+    document.getElementById('btnCancelar').addEventListener('click', closeModal);
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    });
+
+    init();
+  </script>
+</body>
+</html>

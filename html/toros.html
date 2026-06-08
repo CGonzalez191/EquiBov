@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EQUIBOV — Toros</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../img/torito.png" />
+  <link href="../css/equibov.css" rel="stylesheet" />
+  <style>
+    .panel-overlay { display: none; position: fixed; inset: 0; background: rgba(44,44,42,0.2); z-index: 140; }
+    .panel-overlay.open { display: block; }
+
+    .detail-panel { position: fixed; top: 0; right: -480px; width: 480px; height: 100vh; background: var(--white); border-left: 1px solid var(--bone); z-index: 150; display: flex; flex-direction: column; transition: right 0.3s ease; overflow-y: auto; }
+    .detail-panel.open { right: 0; }
+    .detail-header { padding: 28px 28px 20px; border-bottom: 1px solid var(--bone); display: flex; align-items: flex-start; justify-content: space-between; }
+    .detail-header-info h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; }
+    .detail-header-info p  { font-size: 10px; color: var(--mid); margin-top: 3px; letter-spacing: 0.06em; }
+    .btn-close { background: none; border: none; font-size: 18px; color: var(--light); cursor: pointer; padding: 0; line-height: 1; }
+    .btn-close:hover { color: var(--carbon); }
+    .detail-section { padding: 18px 28px; border-bottom: 1px solid rgba(211,209,199,0.4); }
+    .detail-section-label { font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mid); margin-bottom: 12px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .detail-field .df-label { font-size: 9px; color: var(--light); letter-spacing: 0.1em; margin-bottom: 3px; }
+    .detail-field .df-value { font-size: 12px; color: var(--carbon); }
+    .cert-item { padding: 12px 0; border-bottom: 1px solid rgba(211,209,199,0.3); display: flex; align-items: center; justify-content: space-between; }
+    .cert-item:last-child { border-bottom: none; }
+    .cert-item .cert-fecha { font-size: 12px; color: var(--carbon); }
+    .cert-item .cert-vet   { font-size: 10px; color: var(--mid); margin-top: 2px; }
+
+    .toro-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--cream); border: 1px solid var(--bone); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+    .toro-avatar .toro-icon { width: 100%; height: 100%; object-fit: cover; }
+    .toro-cell { display: flex; align-items: center; gap: 12px; }
+    .toro-cell .name { font-weight: 500; }
+    .toro-cell .numero { font-size: 10px; color: var(--light); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field-group.full { grid-column: 1 / -1; }
+
+    .table-wrap { opacity: 0; animation: fadeUp 0.45s ease 0.12s forwards; }
+    .detail-panel.open { animation: fadeUp 0.3s ease; }
+
+    @media (max-width: 768px) {
+      .detail-panel { width: 100%; right: -100%; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .table-wrap { opacity: 1; animation: none; }
+      tr { opacity: 1 !important; animation: none !important; }
+      .detail-panel.open { opacity: 1; animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Toros</h2>
+        <p id="totalLabel">Cargando...</p>
+      </div>
+      <button class="btn-primary" id="btnNuevo">+ Nuevo toro</button>
+    </div>
+
+    <div class="toolbar">
+      <input class="search-input" type="text" id="searchInput" placeholder="Buscar por nombre, n&uacute;mero o raza..." />
+      <select class="filter-select" id="filterHacienda">
+        <option value="">Todas las haciendas</option>
+      </select>
+      <select class="filter-select" id="filterRaza">
+        <option value="">Todas las razas</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Toro</th>
+            <th>Raza</th>
+            <th>Edad</th>
+            <th>Hacienda</th>
+            <th>&Uacute;ltimo cert.</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tablebody">
+          <tr><td colspan="6"><div class="loading-state">Cargando toros...</div></td></tr>
+        </tbody>
+      </table>
+      <div class="pagination" id="pagination">
+        <button class="page-btn" id="pagePrev" disabled>← Anterior</button>
+        <div id="pageNumbers"></div>
+        <button class="page-btn" id="pageNext" disabled>Siguiente →</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="panel-overlay" id="panelOverlay"></div>
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+      <div class="detail-header-info">
+        <h3 id="detailNombre">—</h3>
+        <p id="detailSub">—</p>
+      </div>
+      <button class="btn-close" id="btnClosePanel">✕</button>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-label">Identificaci&oacute;n</div>
+      <div class="detail-grid">
+        <div class="detail-field"><div class="df-label">N&uacute;mero / Arete</div><div class="df-value" id="dNumero">—</div></div>
+        <div class="detail-field"><div class="df-label">Registro</div><div class="df-value" id="dRegistro">—</div></div>
+        <div class="detail-field"><div class="df-label">Raza</div><div class="df-value" id="dRaza">—</div></div>
+        <div class="detail-field"><div class="df-label">Edad</div><div class="df-value" id="dEdad">—</div></div>
+        <div class="detail-field"><div class="df-label">Hacienda</div><div class="df-value" id="dHacienda">—</div></div>
+        <div class="detail-field"><div class="df-label">Propietario</div><div class="df-value" id="dPropietario">—</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="detail-section-label" style="margin-bottom:0;">Historial de certificados</div>
+        <a id="btnNuevoCertPanel" href="#" class="btn-icon primary-btn" style="font-size:9px;">+ nuevo</a>
+      </div>
+      <div id="detailCerts"><div class="loading-state">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 id="modalTitle">Nuevo toro</h3>
+      <div class="form-grid">
+        <div class="field-group">
+          <label class="field-label" for="fNumero">N&uacute;mero / Arete *</label>
+          <input class="field-input" type="text" id="fNumero" placeholder="Ej: 097/14" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="fNombre">Nombre</label>
+          <input class="field-input" type="text" id="fNombre" placeholder="Ej: EL BARZAL ANTO 010" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="fRaza">Raza</label>
+          <input class="field-input" type="text" id="fRaza" placeholder="Ej: Brahman" list="razasList" />
+          <datalist id="razasList">
+            <option value="Brahman">
+            <option value="Romosinuano">
+            <option value="Ceb&uacute;">
+            <option value="Simmental">
+            <option value="Angus">
+            <option value="Gyr">
+            <option value="Holstein">
+            <option value="Nelore">
+          </datalist>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="fRegistro">Registro</label>
+          <input class="field-input" type="text" id="fRegistro" placeholder="Ej: MGY094486" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="fEdad">Edad (meses)</label>
+          <input class="field-input" type="number" id="fEdad" placeholder="Ej: 48" min="1" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="fHacienda">Hacienda *</label>
+          <select class="field-input" id="fHacienda">
+            <option value="">Seleccionar...</option>
+          </select>
+        </div>
+      </div>
+      <div class="error-msg" id="modalError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btnCancelar">Cancelar</button>
+        <button class="btn-primary" id="btnGuardar">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/toast.js"></script>
+  <script>
+    let allData    = [];
+    let haciendas  = [];
+    let editingId  = null;
+    let currentUser = null;
+    const PAGE_SIZE = 20;
+    let currentPage = 1;
+
+    function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+    async function init() {
+      document.body.insertAdjacentHTML('afterbegin', createSidebar('toros'));
+      const session = await checkSession();
+      if (!session) return;
+      currentUser = session.user;
+      document.getElementById('userEmail').textContent = currentUser.email;
+      document.getElementById('btnLogout').addEventListener('click', logout);
+
+      const params = new URLSearchParams(window.location.search);
+      const idParam = params.get('id');
+
+      await loadHaciendas();
+      await loadToros();
+
+      if (idParam) openDetail(idParam);
+    }
+
+    async function loadHaciendas() {
+      const { data } = await sb
+        .from('haciendas')
+        .select('id, nombre, propietarios(nombre)')
+        .order('nombre');
+      haciendas = data || [];
+
+      const filterSel = document.getElementById('filterHacienda');
+      const formSel   = document.getElementById('fHacienda');
+      haciendas.forEach(h => {
+        filterSel.innerHTML += `<option value="${h.id}">${h.nombre}</option>`;
+        formSel.innerHTML   += `<option value="${h.id}">${h.nombre} &mdash; ${h.propietarios?.nombre || ''}</option>`;
+      });
+    }
+
+    async function loadToros() {
+      const { data, error } = await sb
+        .from('toros')
+        .select(`*, haciendas ( nombre, propietarios ( nombre ) ), certificados ( id, fecha, conclusion )`)
+        .order('nombre');
+
+      if (error) { renderError(); return; }
+      allData = data || [];
+
+      const razas = [...new Set(allData.map(t => t.raza).filter(Boolean))].sort();
+      const filterRaza = document.getElementById('filterRaza');
+      razas.forEach(r => { filterRaza.innerHTML += `<option value="${r}">${r}</option>`; });
+
+      paginateAndRender(allData);
+    }
+
+    function getUltimoCert(toro) {
+      if (!toro.certificados?.length) return null;
+      return toro.certificados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+    }
+
+    function getConclusionBadge(conclusion) {
+      if (!conclusion) return '<span class="badge">&mdash;</span>';
+      const up = conclusion.toUpperCase();
+      if (up.includes('APTO PARA')) return '<span class="badge apto">Apto</span>';
+      if (up.includes('RESERVA') || up.includes('RESERVAS')) return '<span class="badge reserva">Con reservas</span>';
+      if (up.includes('NO APTO')) return '<span class="badge no-apto">No apto</span>';
+      return '<span class="badge">Ver</span>';
+    }
+
+    function formatEdad(meses) {
+      if (!meses) return '&mdash;';
+      if (meses < 12) return `${meses} m`;
+      const y = Math.floor(meses / 12);
+      const m = meses % 12;
+      return m ? `${y}a ${m}m` : `${y} a&ntilde;os`;
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tablebody');
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Sin toros registrados a&uacute;n</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map((t, i) => {
+        const delay = (0.08 + i * 0.035).toFixed(3);
+        const ult = getUltimoCert(t);
+        const fechaCert = ult
+          ? new Date(ult.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' })
+          : '&mdash;';
+        return `<tr style="opacity:0;animation:fadeUp 0.3s ease ${delay}s forwards;">
+          <td data-label="Toro">
+            <div class="toro-cell">
+              <div class="toro-avatar"><img class="toro-icon" src="../img/torito.png" alt="" /></div>
+              <div>
+                <div class="name">${t.nombre || t.numero}</div>
+                <div class="numero">${t.nombre ? t.numero : ''}</div>
+              </div>
+            </div>
+          </td>
+          <td data-label="Raza" class="secondary">${t.raza || '&mdash;'}</td>
+          <td data-label="Edad" class="secondary">${formatEdad(t.edad_meses)}</td>
+          <td data-label="Hacienda" class="secondary">${t.haciendas?.nombre || '&mdash;'}</td>
+          <td data-label="&Uacute;ltimo cert.">
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${getConclusionBadge(ult?.conclusion)}
+              <span style="font-size:10px;color:var(--light);">${fechaCert}</span>
+            </div>
+          </td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-icon" onclick="openDetail('${t.id}')">historial</button>
+              <button class="btn-icon" onclick="openEdit('${t.id}')">editar</button>
+              <button class="btn-icon danger" onclick="deleteToro('${t.id}','${(t.nombre||t.numero).replace(/'/g,"\\'")}')">eliminar</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderError() {
+      document.getElementById('tablebody').innerHTML =
+        '<tr><td colspan="6"><div class="empty-state">Error al cargar datos</div></td></tr>';
+    }
+
+    function paginateAndRender(fullData) {
+      const total = fullData.length;
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const slice = fullData.slice(start, start + PAGE_SIZE);
+      document.getElementById('totalLabel').textContent =
+        `${total} toro${total !== 1 ? 's' : ''} registrado${total !== 1 ? 's' : ''}`;
+      renderTable(slice);
+      renderPagination(total);
+    }
+
+    function renderPagination(total) {
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      document.getElementById('pagePrev').disabled = currentPage <= 1;
+      document.getElementById('pageNext').disabled = currentPage >= totalPages;
+      let html = '';
+      const range = 2;
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+          html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        } else if (i === currentPage - range - 1 || i === currentPage + range + 1) {
+          html += '<span class="page-info">...</span>';
+        }
+      }
+      document.getElementById('pageNumbers').innerHTML = html;
+    }
+
+    function goToPage(n) { currentPage = n; paginateAndRender(allData); }
+
+    document.getElementById('pagePrev').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; paginateAndRender(allData); }
+    });
+    document.getElementById('pageNext').addEventListener('click', () => {
+      const totalPages = Math.ceil(allData.length / PAGE_SIZE) || 1;
+      if (currentPage < totalPages) { currentPage++; paginateAndRender(allData); }
+    });
+
+    function applyFilters() {
+      const q   = document.getElementById('searchInput').value.toLowerCase();
+      const hac = document.getElementById('filterHacienda').value;
+      const raza = document.getElementById('filterRaza').value;
+      const filtered = allData.filter(t =>
+        (!q    || t.nombre?.toLowerCase().includes(q) || t.numero?.toLowerCase().includes(q) || t.raza?.toLowerCase().includes(q)) &&
+        (!hac  || t.hacienda_id === hac) &&
+        (!raza || t.raza === raza)
+      );
+      currentPage = 1;
+      paginateAndRender(filtered);
+    }
+    document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 200));
+    document.getElementById('filterHacienda').addEventListener('change', applyFilters);
+    document.getElementById('filterRaza').addEventListener('change', applyFilters);
+
+    async function openDetail(id) {
+      const t = allData.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('detailNombre').textContent = t.nombre || t.numero;
+      document.getElementById('detailSub').textContent    = `${t.raza || '&mdash;'} &middot; ${t.haciendas?.nombre || '&mdash;'}`;
+      document.getElementById('dNumero').textContent      = t.numero || '&mdash;';
+      document.getElementById('dRegistro').textContent    = t.registro || '&mdash;';
+      document.getElementById('dRaza').textContent        = t.raza || '&mdash;';
+      document.getElementById('dEdad').textContent        = formatEdad(t.edad_meses);
+      document.getElementById('dHacienda').textContent    = t.haciendas?.nombre || '&mdash;';
+      document.getElementById('dPropietario').textContent = t.haciendas?.propietarios?.nombre || '&mdash;';
+      document.getElementById('btnNuevoCertPanel').href   = `certificado-nuevo.html?toro=${id}`;
+      document.getElementById('detailCerts').innerHTML    = '<div class="loading-state">Cargando...</div>';
+
+      document.getElementById('detailPanel').classList.add('open');
+      document.getElementById('panelOverlay').classList.add('open');
+
+      const { data: certs } = await sb
+        .from('certificados')
+        .select('id, fecha, conclusion, veterinario_nombre')
+        .eq('toro_id', id)
+        .order('fecha', { ascending: false });
+
+      const container = document.getElementById('detailCerts');
+      if (!certs?.length) {
+        container.innerHTML = '<div style="font-size:11px;color:var(--light);padding:8px 0;">Sin certificados a&uacute;n</div>';
+        return;
+      }
+      container.innerHTML = certs.map(c => {
+        const fecha = new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+        return `<div class="cert-item">
+          <div>
+            <div class="cert-fecha">${fecha}</div>
+            <div class="cert-vet">${c.veterinario_nombre || '&mdash;'}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${getConclusionBadge(c.conclusion)}
+            <a href="certificado-detalle.html?id=${c.id}" class="btn-icon" style="font-size:9px;">ver &rarr;</a>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function closeDetail() {
+      document.getElementById('detailPanel').classList.remove('open');
+      document.getElementById('panelOverlay').classList.remove('open');
+    }
+    document.getElementById('btnClosePanel').addEventListener('click', closeDetail);
+    document.getElementById('panelOverlay').addEventListener('click', closeDetail);
+
+    document.getElementById('btnNuevo').addEventListener('click', () => {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Nuevo toro';
+      ['fNumero','fNombre','fRaza','fRegistro','fEdad'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('fHacienda').value = '';
+      clearModalError();
+      openModal();
+    });
+
+    function openEdit(id) {
+      const t = allData.find(x => x.id === id);
+      if (!t) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = 'Editar toro';
+      document.getElementById('fNumero').value   = t.numero || '';
+      document.getElementById('fNombre').value   = t.nombre || '';
+      document.getElementById('fRaza').value     = t.raza || '';
+      document.getElementById('fRegistro').value = t.registro || '';
+      document.getElementById('fEdad').value     = t.edad_meses || '';
+      document.getElementById('fHacienda').value = t.hacienda_id || '';
+      clearModalError();
+      openModal();
+    }
+
+    document.getElementById('btnGuardar').addEventListener('click', async () => {
+      const numero   = document.getElementById('fNumero').value.trim();
+      const nombre   = document.getElementById('fNombre').value.trim();
+      const raza     = document.getElementById('fRaza').value.trim();
+      const registro = document.getElementById('fRegistro').value.trim();
+      const edad     = parseInt(document.getElementById('fEdad').value) || null;
+      const hacienda = document.getElementById('fHacienda').value;
+
+      if (!numero)   { showModalError('El n&uacute;mero / arete es obligatorio.'); return; }
+      if (!hacienda) { showModalError('Debe seleccionar una hacienda.'); return; }
+
+      const payload = { numero, nombre: nombre || null, raza: raza || null, registro: registro || null, edad_meses: edad, hacienda_id: hacienda };
+      let error;
+      if (editingId) {
+        ({ error } = await sb.from('toros').update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await sb.from('toros').insert({ ...payload, creado_por: currentUser.id }));
+      }
+      if (error) { showModalError('Error al guardar. Intente de nuevo.'); return; }
+      closeModal();
+      showToast(editingId ? 'Toro actualizado correctamente.' : 'Toro creado correctamente.', 'success');
+      loadToros();
+    });
+
+    async function deleteToro(id, nombre) {
+      const ok = await showConfirm(`&iquest;Eliminar al toro "${nombre}"?<br>Se eliminar&aacute;n tambi&eacute;n todos sus certificados.`);
+      if (!ok) return;
+      const { error } = await sb.from('toros').delete().eq('id', id);
+      if (error) { showToast('Error al eliminar.', 'error'); return; }
+      showToast('Toro eliminado correctamente.', 'success');
+      loadToros();
+    }
+
+    function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+    function showModalError(msg) { const el = document.getElementById('modalError'); el.textContent = msg; el.classList.add('visible'); }
+    function clearModalError()   { document.getElementById('modalError').classList.remove('visible'); }
+
+    document.getElementById('btnCancelar').addEventListener('click', closeModal);
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    });
+
+    init();
+  </script>
+</body>
+</html>

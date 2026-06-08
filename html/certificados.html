@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EQUIBOV — Certificados</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../img/torito.png" />
+  <link href="../css/equibov.css" rel="stylesheet" />
+  <style>
+    .table-wrap { opacity: 0; animation: fadeUp 0.45s ease 0.12s forwards; }
+
+    .toro-cell { display: flex; flex-direction: column; gap: 2px; }
+    .toro-cell .name { font-weight: 500; font-size: 12px; }
+    .toro-cell .sub  { font-size: 10px; color: var(--light); }
+
+    .vence-ok      { color: var(--mid); }
+    .vence-pronto  { color: #8B5E1A; }
+    .vence-expirado { color: #8B2E2E; }
+
+    .empty-state a { color: var(--mid); text-decoration: none; border-bottom: 1px solid var(--bone); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .table-wrap { opacity: 1; animation: none; }
+      tr { opacity: 1 !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Certificados</h2>
+        <p id="totalLabel">Cargando...</p>
+      </div>
+      <a class="btn-primary" href="certificado-nuevo.html">+ Nuevo certificado</a>
+    </div>
+
+    <div class="toolbar">
+      <input class="search-input" type="text" id="searchInput" placeholder="Buscar por toro, hacienda o veterinario..." />
+      <select class="filter-select" id="filterDiagnostico">
+        <option value="">Todos los diagn&oacute;sticos</option>
+        <option value="apto">Apto</option>
+        <option value="reserva">Con reservas</option>
+        <option value="no-apto">No apto</option>
+      </select>
+      <select class="filter-select" id="filterVencimiento">
+        <option value="">Todos</option>
+        <option value="vigente">Vigentes</option>
+        <option value="pronto">Vence pronto (&le;7 d&iacute;as)</option>
+        <option value="expirado">Expirados</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Toro</th>
+            <th>Hacienda</th>
+            <th>Fecha</th>
+            <th>Veterinario</th>
+            <th>Diagn&oacute;stico</th>
+            <th>Vence</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tablebody">
+          <tr><td colspan="7"><div class="loading-state">Cargando certificados...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/toast.js"></script>
+  <script>
+    let allData = [];
+    const PAGE_SIZE = 20;
+    let currentPage = 1;
+
+    function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+    async function init() {
+      document.body.insertAdjacentHTML('afterbegin', createSidebar('certificados'));
+      const session = await checkSession();
+      if (!session) return;
+      document.getElementById('userEmail').textContent = session.user.email;
+      document.getElementById('btnLogout').addEventListener('click', logout);
+      loadCertificados();
+    }
+
+    async function loadCertificados() {
+      const { data, error } = await sb
+        .from('certificados')
+        .select(`
+          id, fecha, conclusion, validez_dias, veterinario_nombre,
+          toros ( id, nombre, numero, haciendas ( nombre ) )
+        `)
+        .order('fecha', { ascending: false });
+
+      if (error) {
+        document.getElementById('tablebody').innerHTML =
+          `<tr><td colspan="7"><div class="empty-state">Error al cargar datos</div></td></tr>`;
+        return;
+      }
+
+      allData = data || [];
+      paginateAndRender(allData);
+    }
+
+    function getDiagnosticoTipo(conclusion) {
+      if (!conclusion) return '';
+      const up = conclusion.toUpperCase();
+      if (up.includes('NO APTO')) return 'no-apto';
+      if (up.includes('RESERVA')) return 'reserva';
+      if (up.includes('APTO'))    return 'apto';
+      return '';
+    }
+
+    function getVencimiento(fecha, validezDias) {
+      if (!fecha || !validezDias) return { texto: '\u2014', clase: '' };
+      const vence = new Date(fecha + 'T00:00:00');
+      vence.setDate(vence.getDate() + validezDias);
+      const hoy      = new Date();
+      hoy.setHours(0,0,0,0);
+      const diffDias = Math.floor((vence - hoy) / (1000 * 60 * 60 * 24));
+      const texto    = vence.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      if (diffDias < 0)  return { texto, clase: 'vence-expirado', estado: 'expirado' };
+      if (diffDias <= 7) return { texto, clase: 'vence-pronto',   estado: 'pronto' };
+      return { texto, clase: 'vence-ok', estado: 'vigente' };
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tablebody');
+      document.getElementById('totalLabel').textContent =
+        `${data.length} certificado${data.length !== 1 ? 's' : ''} registrado${data.length !== 1 ? 's' : ''}`;
+
+      if (!data.length) {
+        tbody.innerHTML = `
+          <tr><td colspan="7">
+            <div class="empty-state">
+              Sin certificados a\u00fan &mdash;
+              <a href="certificado-nuevo.html">crear el primero</a>
+            </div>
+          </td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.map((c, i) => {
+        const delay = (0.08 + i * 0.035).toFixed(3);
+        const toro     = c.toros;
+        const hacienda = toro?.haciendas?.nombre || '\u2014';
+        const tipo     = getDiagnosticoTipo(c.conclusion);
+        const venc     = getVencimiento(c.fecha, c.validez_dias);
+        const fecha    = c.fecha
+          ? new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+          : '\u2014';
+
+        const badgeLabel = { apto: 'Apto', reserva: 'Con reservas', 'no-apto': 'No apto', '': '\u2014' };
+
+        return `
+          <tr style="opacity:0;animation:fadeUp 0.3s ease ${delay}s forwards;" onclick="window.location='certificado-detalle.html?id=${c.id}'">
+            <td data-label="Toro">
+              <div class="toro-cell">
+                <span class="name">${toro?.nombre || toro?.numero || '\u2014'}</span>
+                <span class="sub">${toro?.numero && toro?.nombre ? toro.numero : ''}</span>
+              </div>
+            </td>
+            <td data-label="Hacienda" class="secondary">${hacienda}</td>
+            <td data-label="Fecha" class="secondary">${fecha}</td>
+            <td data-label="Veterinario" class="secondary">${c.veterinario_nombre || '\u2014'}</td>
+            <td data-label="Diagn\u00f3stico">
+              ${tipo
+                ? `<span class="badge ${tipo}">${badgeLabel[tipo]}</span>`
+                : `<span class="badge">\u2014</span>`}
+            </td>
+            <td data-label="Vence" class="${venc.clase}" style="font-size:11px;">${venc.texto}</td>
+            <td onclick="event.stopPropagation()">
+              <div class="action-btns">
+                <button class="btn-icon" onclick="window.location='certificado-detalle.html?id=${c.id}'">ver &rarr;</button>
+                <button class="btn-icon danger" onclick="deleteCert('${c.id}')">eliminar</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function paginateAndRender(fullData) {
+      const total = fullData.length;
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const slice = fullData.slice(start, start + PAGE_SIZE);
+      renderTable(slice);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', debounce(e => {
+      const q    = e.target.value.toLowerCase();
+      const diag = document.getElementById('filterDiagnostico').value;
+      const venc = document.getElementById('filterVencimiento').value;
+      const filtered = allData.filter(c => {
+        const toro     = c.toros;
+        const hacienda = toro?.haciendas?.nombre || '';
+        const matchQ   = !q ||
+          toro?.nombre?.toLowerCase().includes(q) ||
+          toro?.numero?.toLowerCase().includes(q) ||
+          hacienda.toLowerCase().includes(q) ||
+          c.veterinario_nombre?.toLowerCase().includes(q);
+        const tipo     = getDiagnosticoTipo(c.conclusion);
+        const matchD   = !diag || tipo === diag;
+        const vencInfo = getVencimiento(c.fecha, c.validez_dias);
+        const matchV   = !venc || vencInfo.estado === venc;
+        return matchQ && matchD && matchV;
+      });
+      currentPage = 1;
+      paginateAndRender(filtered);
+    }, 200));
+
+    document.getElementById('filterDiagnostico').addEventListener('change', () => {
+      currentPage = 1;
+      const event = new Event('input');
+      document.getElementById('searchInput').dispatchEvent(event);
+    });
+
+    document.getElementById('filterVencimiento').addEventListener('change', () => {
+      currentPage = 1;
+      const event = new Event('input');
+      document.getElementById('searchInput').dispatchEvent(event);
+    });
+
+    async function deleteCert(id) {
+      const ok = await showConfirm('\u00bfEliminar este certificado? Esta acci\u00f3n no se puede deshacer.');
+      if (!ok) return;
+      const { error } = await sb.from('certificados').delete().eq('id', id);
+      if (error) { showToast('Error al eliminar el certificado', 'error'); return; }
+      showToast('Certificado eliminado', 'success');
+      allData = allData.filter(c => c.id !== id);
+      paginateAndRender(allData);
+    }
+
+    init();
+  </script>
+</body>
+</html>

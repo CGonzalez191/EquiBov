@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EQUIBOV — Detalle Certificado</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../img/torito.png" />
+  <link href="../css/equibov.css" rel="stylesheet" />
+  <style>
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 32px; gap: 20px; }
+    .breadcrumb { font-size: 10px; color: var(--light); letter-spacing: 0.08em; margin-bottom: 8px; }
+    .breadcrumb a { color: var(--mid); text-decoration: none; transition: color 0.2s; }
+    .breadcrumb a:hover { color: var(--carbon); }
+    .page-header-left h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; }
+    .page-header-left p { font-size: 11px; color: var(--mid); margin-top: 4px; letter-spacing: 0.06em; }
+    .header-actions { display: flex; gap: 10px; flex-shrink: 0; }
+    .btn-secondary { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; background: none; color: var(--mid); border: 1px solid var(--bone); padding: 10px 16px; border-radius: 2px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
+    .btn-secondary:hover { border-color: var(--carbon); color: var(--carbon); }
+    .btn-danger { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; background: none; color: #8B2E2E; border: 1px solid #E0AAAA; padding: 10px 16px; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
+    .btn-danger:hover { background: #F5EAEA; }
+
+    .content-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+
+    .section { background: var(--white); border: 1px solid var(--bone); border-radius: 3px; margin-bottom: 20px; overflow: hidden; opacity: 0; animation: fadeUp 0.4s ease forwards; }
+    .section:nth-child(1) { animation-delay: 0.1s; }
+    .section:nth-child(2) { animation-delay: 0.15s; }
+    .section:nth-child(3) { animation-delay: 0.2s; }
+    .section:nth-child(4) { animation-delay: 0.25s; }
+    .section:nth-child(5) { animation-delay: 0.3s; }
+    .section-header { padding: 16px 24px; border-bottom: 1px solid var(--bone); display: flex; align-items: center; gap: 10px; }
+    .section-header h3 { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mid); }
+    .section-body { padding: 24px; }
+
+    .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .data-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .data-label { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--light); margin-bottom: 5px; }
+    .data-value { font-size: 12px; color: var(--carbon); }
+    .data-value.large { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; }
+
+    .def-table { width: 100%; border-collapse: collapse; }
+    .def-table th { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); padding: 8px 12px; text-align: left; background: var(--cream); border-bottom: 1px solid var(--bone); }
+    .def-table td { padding: 7px 12px; border-bottom: 1px solid rgba(211,209,199,0.3); font-size: 11px; }
+    .def-table tr:last-child td { border-bottom: none; }
+    .def-total td { font-weight: 500; background: var(--cream); font-size: 11px; border-top: 1px solid var(--bone); }
+    .bar-cell { width: 120px; }
+    .bar-bg { height: 4px; background: var(--bone); border-radius: 2px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--carbon); border-radius: 2px; transition: width 0.5s ease; }
+
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+    .media-item { position: relative; border: 1px solid var(--bone); border-radius: 2px; overflow: hidden; aspect-ratio: 1; cursor: pointer; background: var(--cream); transition: border-color 0.2s; }
+    .media-item:hover { border-color: var(--carbon); }
+    .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
+    .media-item .media-type { position: absolute; top: 5px; left: 5px; background: rgba(44,44,42,0.7); color: var(--white); font-size: 8px; padding: 2px 6px; border-radius: 2px; letter-spacing: 0.08em; }
+
+    .side-card { background: var(--white); border: 1px solid var(--bone); border-radius: 3px; margin-bottom: 16px; overflow: hidden; opacity: 0; animation: fadeUp 0.4s ease 0.2s forwards; }
+    .side-card-header { padding: 14px 20px; border-bottom: 1px solid var(--bone); }
+    .side-card-header h3 { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid); }
+    .side-card-body { padding: 16px 20px; }
+
+    .toro-card-inner { display: flex; gap: 14px; align-items: flex-start; }
+    .toro-avatar { width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; overflow: hidden; }
+    .toro-avatar .toro-icon { width: 100%; height: 100%; object-fit: cover; }
+    .toro-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; }
+    .toro-meta { font-size: 10px; color: var(--mid); margin-top: 3px; letter-spacing: 0.06em; line-height: 1.6; }
+    .toro-link { display: inline-block; margin-top: 12px; font-size: 9px; letter-spacing: 0.15em; color: var(--mid); text-decoration: none; border-bottom: 1px solid var(--bone); padding-bottom: 1px; transition: all 0.2s; }
+    .toro-link:hover { color: var(--carbon); border-color: var(--carbon); }
+
+    .conclusion-card-apto { border-color: #C0DD97; }
+    .conclusion-card-reserva { border-color: #F0D09A; }
+    .conclusion-card-no-apto { border-color: #E0AAAA; }
+    .conclusion-badge { font-size: 10px; letter-spacing: 0.12em; padding: 6px 12px; border-radius: 2px; display: inline-block; margin-bottom: 14px; }
+    .badge-apto { background: #EBF3E8; color: #3B6D11; border: 1px solid #C0DD97; }
+    .badge-reserva { background: #FDF3E3; color: #8B5E1A; border: 1px solid #F0D09A; }
+    .badge-no-apto { background: #F5EAEA; color: #8B2E2E; border: 1px solid #E0AAAA; }
+    .conclusion-text { font-size: 11px; color: var(--dark); line-height: 1.7; letter-spacing: 0.02em; }
+    .validez-info { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--bone); font-size: 10px; color: var(--mid); letter-spacing: 0.05em; }
+
+    .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; align-items: center; justify-content: center; }
+    .lightbox.open { display: flex; }
+    .lightbox img, .lightbox video { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 2px; }
+    .lightbox-close { position: absolute; top: 20px; right: 24px; color: white; font-size: 24px; cursor: pointer; background: none; border: none; line-height: 1; }
+
+    .print-header { display: none; }
+    .loading-block { padding: 48px; text-align: center; font-size: 11px; color: var(--light); letter-spacing: 0.1em; animation: pulse 1.4s ease infinite; }
+    .error-block { padding: 48px; text-align: center; font-size: 12px; color: #8B2E2E; }
+
+    @media (max-width: 768px) {
+      .content-grid { grid-template-columns: 1fr; }
+      .data-grid, .data-grid-2 { grid-template-columns: 1fr; gap: 14px; }
+      .section-body { padding: 16px; }
+    }
+
+    /* ── PRINT / PDF ── */
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      @page {
+        size: A4;
+        margin: 1.8cm 1.6cm;
+      }
+
+      html, body {
+        overflow: visible !important;
+        background: #fff !important;
+        font-size: 10pt;
+      }
+
+      /* Ocultar todo lo que no es contenido */
+      .sidebar, .hamburger, .sidebar-overlay,
+      .toast, .header-actions, .breadcrumb,
+      #lightbox, .modal-overlay,
+      .media-grid, .lightbox,
+      .print-hidden { display: none !important; }
+
+      /* Resetear layout */
+      body { display: block !important; }
+      .main {
+        margin: 0 !important;
+        padding: 0 !important;
+        opacity: 1 !important;
+        animation: none !important;
+      }
+
+      /* Encabezado del certificado visible solo al imprimir */
+      .print-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 14pt;
+        margin-bottom: 18pt;
+        border-bottom: 2px solid #2C2C2A;
+      }
+      .print-header-brand h1 {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 28pt;
+        font-weight: 600;
+        color: #2C2C2A;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+      .print-header-brand p {
+        font-size: 7pt;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #5F5E5A;
+        margin-top: 3pt;
+      }
+      .print-header-right {
+        text-align: right;
+        font-size: 7.5pt;
+        color: #5F5E5A;
+        letter-spacing: 0.06em;
+        line-height: 1.7;
+      }
+      .print-header-right strong {
+        font-size: 9pt;
+        color: #2C2C2A;
+        display: block;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      /* Título de la página */
+      .page-header {
+        margin-bottom: 14pt !important;
+      }
+      .page-header-left h2 {
+        font-size: 16pt !important;
+        color: #2C2C2A !important;
+      }
+      .page-header-left p {
+        font-size: 8pt !important;
+        color: #5F5E5A !important;
+      }
+
+      /* Layout de una sola columna */
+      .content-grid {
+        display: block !important;
+        gap: 0 !important;
+      }
+
+      /* La columna lateral va al principio como bloque horizontal */
+      .side-col {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10pt !important;
+        margin-bottom: 14pt !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+
+      .side-card {
+        margin-bottom: 0 !important;
+        opacity: 1 !important;
+        animation: none !important;
+        border: 1px solid #D3D1C7 !important;
+        border-radius: 2pt !important;
+        break-inside: avoid;
+      }
+
+      /* Secciones */
+      .section {
+        opacity: 1 !important;
+        animation: none !important;
+        border: 1px solid #D3D1C7 !important;
+        border-radius: 2pt !important;
+        margin-bottom: 10pt !important;
+        break-inside: avoid;
+      }
+
+      .section-header {
+        padding: 7pt 12pt !important;
+        background: #F1EFE8 !important;
+      }
+      .section-header h3 {
+        font-size: 7pt !important;
+        letter-spacing: 0.2em !important;
+      }
+      .section-body { padding: 10pt 12pt !important; }
+
+      /* Grids de datos */
+      .data-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 10pt !important;
+      }
+      .data-grid-2 {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10pt !important;
+      }
+      .data-label {
+        font-size: 6.5pt !important;
+        letter-spacing: 0.18em !important;
+        margin-bottom: 3pt !important;
+      }
+      .data-value { font-size: 9pt !important; }
+      .data-value.large { font-size: 14pt !important; }
+
+      /* Tablas de defectos */
+      .def-table th { font-size: 6.5pt !important; padding: 5pt 8pt !important; }
+      .def-table td { font-size: 8.5pt !important; padding: 4pt 8pt !important; }
+      .bar-cell, .bar-bg, .bar-fill { display: none !important; }
+
+      /* Cards laterales */
+      .side-card-header { padding: 7pt 12pt !important; background: #F1EFE8 !important; }
+      .side-card-header h3 { font-size: 7pt !important; }
+      .side-card-body { padding: 10pt 12pt !important; }
+      .conclusion-badge { font-size: 8pt !important; padding: 4pt 8pt !important; }
+      .conclusion-text { font-size: 8.5pt !important; line-height: 1.5 !important; }
+      .validez-info { font-size: 7.5pt !important; }
+      .toro-name { font-size: 13pt !important; }
+      .toro-meta { font-size: 7.5pt !important; }
+      .toro-link { display: none !important; }
+
+      /* Sección de archivos: fluye normal sin forzar salto */
+      .section:has(.media-grid) {
+        border: none !important;
+        margin-top: 10pt !important;
+      }
+      .section:has(.media-grid) .section-header { display: none !important; }
+      .section:has(.media-grid) .section-body { padding: 0 !important; }
+
+      /* Imágenes: cada una ocupa su propia página si no cabe */
+      .media-grid { display: block !important; }
+
+      .media-item {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        aspect-ratio: unset !important;
+        border: none !important;
+        background: none !important;
+        width: 100% !important;
+        margin-bottom: 12pt !important;
+        padding: 0 !important;
+      }
+
+      .media-item img {
+        max-width: 100% !important;
+        max-height: 20cm !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+        display: block !important;
+        margin: 0 auto !important;
+        border: 1px solid #D3D1C7 !important;
+        border-radius: 2pt !important;
+      }
+
+      .media-item video { display: none !important; }
+
+      .media-item .media-type {
+        position: static !important;
+        display: inline-block !important;
+        margin-top: 6pt !important;
+        background: #F1EFE8 !important;
+        color: #5F5E5A !important;
+        font-size: 7pt !important;
+        border: 1px solid #D3D1C7 !important;
+        padding: 3pt 8pt !important;
+        border-radius: 2pt !important;
+        letter-spacing: 0.12em !important;
+      }
+
+      /* Pie de página */
+      .print-footer {
+        display: block !important;
+        margin-top: 20pt;
+        padding-top: 10pt;
+        border-top: 1px solid #D3D1C7;
+        font-size: 7pt;
+        color: #B4B2A9;
+        text-align: center;
+        letter-spacing: 0.1em;
+      }
+
+      /* Saltos de página */
+      .section:nth-child(n+4) { page-break-before: auto; }
+      .section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="main" id="mainContent">
+    <div class="loading-block">Cargando certificado...</div>
+  </main>
+
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">&#10005;</button>
+    <div id="lightboxContent"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/toast.js"></script>
+  <script>
+    let certData = null;
+
+    async function init() {
+      document.body.insertAdjacentHTML('afterbegin', createSidebar('certificado-nuevo'));
+      const session = await checkSession();
+      if (!session) return;
+      document.getElementById('userEmail').textContent = session.user.email;
+      document.getElementById('btnLogout').addEventListener('click', logout);
+
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (!id) { showError('No se especific&oacute; un certificado.'); return; }
+
+      await loadCertificado(id);
+    }
+
+    async function loadCertificado(id) {
+      const [certRes, clinRes, espRes, compRes, archRes] = await Promise.all([
+        sb.from('certificados').select(`*, toros(*, haciendas(nombre, propietarios(nombre)))`).eq('id', id).single(),
+        sb.from('examen_clinico').select('*').eq('certificado_id', id).single(),
+        sb.from('espermiograma').select('*').eq('certificado_id', id).single(),
+        sb.from('examenes_complementarios').select('*').eq('certificado_id', id).single(),
+        sb.from('archivos_examen').select('*').eq('certificado_id', id).order('created_at')
+      ]);
+
+      if (certRes.error) { showError('Certificado no encontrado.'); return; }
+
+      certData = {
+        cert:    certRes.data,
+        clinico: clinRes.data,
+        esperm:  espRes.data,
+        comp:    compRes.data,
+        archivos: archRes.data || []
+      };
+
+      renderPage();
+    }
+
+    function getConclusionTipo(texto) {
+      if (!texto) return 'sin-datos';
+      const up = texto.toUpperCase();
+      if (up.includes('NO APTO')) return 'no-apto';
+      if (up.includes('RESERVA')) return 'reserva';
+      if (up.includes('APTO'))    return 'apto';
+      return 'sin-datos';
+    }
+
+    function fmt(v, suffix = '') { return (v !== null && v !== undefined && v !== '') ? `${v}${suffix}` : '&mdash;'; }
+    function fmtDate(d) {
+      if (!d) return '&mdash;';
+      return new Date(d + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+    function fmtPct(v) { return v !== null && v !== undefined ? `${(v * 100).toFixed(2)}%` : '&mdash;'; }
+
+    function renderPage() {
+      const { cert, clinico, esperm, comp, archivos } = certData;
+      const toro  = cert.toros;
+      const hacienda = toro?.haciendas;
+      const tipo  = getConclusionTipo(cert.conclusion);
+      const badgeMap = { apto: 'badge-apto', reserva: 'badge-reserva', 'no-apto': 'badge-no-apto', 'sin-datos': '' };
+      const labelMap = { apto: 'APTO PARA REPRODUCCI&Oacute;N', reserva: 'APTO CON RESERVAS', 'no-apto': 'NO APTO PARA REPRODUCCI&Oacute;N', 'sin-datos': 'SIN DIAGN&Oacute;STICO' };
+
+      let vencimiento = '&mdash;';
+      if (cert.fecha && cert.validez_dias) {
+        const v = new Date(cert.fecha + 'T00:00:00');
+        v.setDate(v.getDate() + cert.validez_dias);
+        vencimiento = v.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+      }
+
+      document.getElementById('mainContent').innerHTML = `
+
+        <!-- ENCABEZADO SOLO VISIBLE AL IMPRIMIR -->
+        <div class="print-header">
+          <div class="print-header-brand">
+            <h1>EQUIBOV</h1>
+            <p>Andrología Bovina · Registro Clínico</p>
+          </div>
+          <div class="print-header-right">
+            <strong>Certificado Andrológico Bovino</strong>
+            ${fmtDate(cert.fecha)}<br>
+            ${cert.ciudad_expedicion || ''}<br>
+            ${cert.veterinario_nombre || ''}
+          </div>
+        </div>
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <div class="breadcrumb">
+              <a href="toros.html">Toros</a> &rarr; <a href="toros.html?id=${toro?.id}">${toro?.nombre || toro?.numero || '&mdash;'}</a> &rarr; Certificado
+            </div>
+            <h2>Certificado Androl&oacute;gico</h2>
+            <p>${fmtDate(cert.fecha)} · ${cert.ciudad_expedicion || ''} · ${cert.veterinario_nombre || ''}</p>
+          </div>
+          <div class="header-actions">
+            <a href="certificado-nuevo.html?toro=${toro?.id}" class="btn-secondary">+ Nuevo examen</a>
+            <button class="btn-secondary" onclick="window.print()">Imprimir / PDF</button>
+            <button class="btn-danger" onclick="deleteCert('${cert.id}')">Eliminar</button>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="main-col">
+
+            <div class="section">
+              <div class="section-header"><h3>A &mdash; Informaci&oacute;n General</h3></div>
+              <div class="section-body">
+                <div class="data-grid">
+                  <div class="data-field"><div class="data-label">Fecha</div><div class="data-value">${fmtDate(cert.fecha)}</div></div>
+                  <div class="data-field"><div class="data-label">Veterinario</div><div class="data-value">${fmt(cert.veterinario_nombre)}</div></div>
+                  <div class="data-field"><div class="data-label">Ciudad</div><div class="data-value">${fmt(cert.ciudad_expedicion)}</div></div>
+                  <div class="data-field"><div class="data-label">M&eacute;todo de colecta</div><div class="data-value">${fmt(cert.metodo_colecta)}</div></div>
+                  <div class="data-field"><div class="data-label">Validez</div><div class="data-value">${fmt(cert.validez_dias, ' d&iacute;as')}</div></div>
+                  <div class="data-field"><div class="data-label">Vence</div><div class="data-value">${vencimiento}</div></div>
+                </div>
+              </div>
+            </div>
+
+            ${clinico ? `
+            <div class="section">
+              <div class="section-header"><h3>B &mdash; Examen Cl&iacute;nico</h3></div>
+              <div class="section-body">
+                <div class="data-grid" style="margin-bottom:20px;">
+                  <div class="data-field"><div class="data-label">Pene</div><div class="data-value">${fmt(clinico.pene)}</div></div>
+                  <div class="data-field"><div class="data-label">Prepucio</div><div class="data-value">${fmt(clinico.prepucio)}</div></div>
+                  <div class="data-field"><div class="data-label">Test&iacute;culos (ext.)</div><div class="data-value">${fmt(clinico.testiculos_ext)}</div></div>
+                </div>
+                <div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--mid);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bone);">Evaluaci&oacute;n testicular</div>
+                <div class="data-grid" style="margin-bottom:20px;">
+                  <div class="data-field"><div class="data-label">Per&iacute;metro escrotal</div><div class="data-value large">${fmt(clinico.perimetro_escrotal, ' cm')}</div></div>
+                  <div class="data-field"><div class="data-label">Tama&ntilde;o derecho</div><div class="data-value">${fmt(clinico.tam_derecho, ' cm')}</div></div>
+                  <div class="data-field"><div class="data-label">Tama&ntilde;o izquierdo</div><div class="data-value">${fmt(clinico.tam_izquierdo, ' cm')}</div></div>
+                  <div class="data-field"><div class="data-label">Posici&oacute;n D / I</div><div class="data-value">${fmt(clinico.posicion_derecho)} / ${fmt(clinico.posicion_izquierdo)}</div></div>
+                  <div class="data-field"><div class="data-label">Consistencia D / I</div><div class="data-value">${fmt(clinico.consistencia_derecho)} / ${fmt(clinico.consistencia_izquierdo)}</div></div>
+                  <div class="data-field"><div class="data-label">Sensibilidad D / I</div><div class="data-value">${fmt(clinico.sensibilidad_derecho)} / ${fmt(clinico.sensibilidad_izquierdo)}</div></div>
+                </div>
+                <div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--mid);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bone);">Genital interno</div>
+                <div class="data-grid">
+                  <div class="data-field"><div class="data-label">Libido</div><div class="data-value">${fmt(clinico.libido)}</div></div>
+                  <div class="data-field"><div class="data-label">Ves&iacute;culas seminales</div><div class="data-value">${fmt(clinico.vesiculas_seminales)}</div></div>
+                  <div class="data-field"><div class="data-label">Pr&oacute;stata</div><div class="data-value">${fmt(clinico.prostata)}</div></div>
+                  <div class="data-field"><div class="data-label">Ampollas</div><div class="data-value">${fmt(clinico.ampollas)}</div></div>
+                </div>
+              </div>
+            </div>` : ''}
+
+            ${esperm ? `
+            <div class="section">
+              <div class="section-header"><h3>C &mdash; Espermiograma</h3></div>
+              <div class="section-body">
+                <div class="data-grid" style="margin-bottom:20px;">
+                  <div class="data-field"><div class="data-label">Olor</div><div class="data-value">${fmt(esperm.olor)}</div></div>
+                  <div class="data-field"><div class="data-label">Aspecto</div><div class="data-value">${fmt(esperm.aspecto)}</div></div>
+                  <div class="data-field"><div class="data-label">pH</div><div class="data-value large">${fmt(esperm.ph)}</div></div>
+                  <div class="data-field"><div class="data-label">Volumen</div><div class="data-value large">${fmt(esperm.volumen_ml, ' mL')}</div></div>
+                  <div class="data-field"><div class="data-label">Motilidad masal</div><div class="data-value large">${fmt(esperm.motilidad_masal)}/5</div></div>
+                  <div class="data-field"><div class="data-label">Motilidad total</div><div class="data-value large">${fmt(esperm.motilidad_total, '%')}</div></div>
+                  <div class="data-field"><div class="data-label">Motilidad progresiva</div><div class="data-value large">${fmt(esperm.motilidad_progresiva, '%')}</div></div>
+                  <div class="data-field"><div class="data-label">Vigor</div><div class="data-value large">${fmt(esperm.vigor)}/5</div></div>
+                  <div class="data-field"><div class="data-label">Concentraci&oacute;n</div><div class="data-value">${fmt(esperm.concentracion, ' &times;10&#8319;/mL')}</div></div>
+                </div>
+                ${renderDefectosSection(esperm)}
+              </div>
+            </div>` : ''}
+
+            ${comp ? `
+            <div class="section">
+              <div class="section-header"><h3>D &mdash; Ex&aacute;menes Complementarios</h3></div>
+              <div class="section-body">
+                <div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--mid);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bone);">Test de integridad de membrana</div>
+                <div class="data-grid-2" style="margin-bottom:20px;">
+                  <div class="data-field"><div class="data-label">Con integridad</div><div class="data-value large">${fmtPct(comp.integridad_con)}</div></div>
+                  <div class="data-field"><div class="data-label">Sin integridad</div><div class="data-value large">${fmtPct(comp.integridad_sin)}</div></div>
+                </div>
+                <div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--mid);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bone);">Ultrasonograf&iacute;a testicular</div>
+                <div class="data-grid" style="margin-bottom:${comp.observaciones_eco ? '16px' : '0'};">
+                  <div class="data-field"><div class="data-label">Homogeneidad par&eacute;nquima</div><div class="data-value">${fmt(comp.homogeneidad_parenquima)}</div></div>
+                  <div class="data-field"><div class="data-label">Puntos hiperecog&eacute;nicos</div><div class="data-value">${fmt(comp.puntos_hiperecogenicos)}</div></div>
+                </div>
+                ${comp.observaciones_eco ? `<div class="data-field" style="grid-column:1/-1;"><div class="data-label" style="margin-bottom:6px;">Observaciones ecogr&aacute;ficas</div><div class="data-value" style="line-height:1.6;">${comp.observaciones_eco}</div></div>` : ''}
+                ${renderISperm(comp.isperm_resultados)}
+              </div>
+            </div>` : ''}
+
+            ${archivos.length ? `
+            <div class="section">
+              <div class="section-header"><h3>Archivos del examen</h3></div>
+              <div class="section-body">
+                <div class="media-grid">
+                  ${archivos.slice(0, 12).map(a => `
+                    <div class="media-item" onclick="openLightbox('${a.url}', '${a.tipo}')">
+                      ${a.tipo === 'video' ? `<video src="${a.url}" muted></video>` : `<img src="${a.url}" alt="archivo" />`}
+                      <span class="media-type">${a.tipo}</span>
+                    </div>`).join('')}
+                    ${archivos.length > 12 ? `<div class="empty-state print-hidden" style="grid-column:1/-1;padding:12px;font-size:10px;">+${archivos.length - 12} archivos m&aacute;s</div>` : ''}
+                </div>
+              </div>
+            </div>` : ''}
+
+          </div>
+
+          <div class="side-col">
+
+            <div class="side-card ${tipo === 'apto' ? 'conclusion-card-apto' : tipo === 'reserva' ? 'conclusion-card-reserva' : tipo === 'no-apto' ? 'conclusion-card-no-apto' : ''}">
+              <div class="side-card-header"><h3>Diagn&oacute;stico</h3></div>
+              <div class="side-card-body">
+                <span class="conclusion-badge ${badgeMap[tipo]}">${labelMap[tipo]}</span>
+                <p class="conclusion-text">${cert.conclusion || '&mdash;'}</p>
+                <div class="validez-info">V&aacute;lido hasta: ${vencimiento}</div>
+              </div>
+            </div>
+
+            <div class="side-card">
+              <div class="side-card-header"><h3>Toro evaluado</h3></div>
+              <div class="side-card-body">
+                <div class="toro-card-inner">
+                  <div class="toro-avatar"><img class="toro-icon" src="../img/torito.png" alt="" /></div>
+                  <div>
+                    <div class="toro-name">${toro?.nombre || toro?.numero || '&mdash;'}</div>
+                    <div class="toro-meta">
+                      ${toro?.numero ? toro.numero + '<br>' : ''}
+                      ${toro?.raza || '&mdash;'}<br>
+                      ${hacienda?.nombre || '&mdash;'}<br>
+                      ${hacienda?.propietarios?.nombre || '&mdash;'}
+                    </div>
+                    <a href="toros.html?id=${toro?.id}" class="toro-link">Ver historial completo &rarr;</a>
+                  </div>
+                </div>
+              </div>
+            </div><!-- /side-col -->
+        </div><!-- /content-grid -->
+
+        <!-- PIE SOLO VISIBLE AL IMPRIMIR -->
+        <div class="print-footer">
+          EQUIBOV — Sistema de Gestión Andrológica Bovina · Documento generado el ${new Date().toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' })}
+        </div>`;
+
+      document.getElementById('btnLogout').addEventListener('click', logout);
+    }
+
+    function renderDefectosSection(esperm) {
+      const may = esperm.defectos_mayores || {};
+      const men = esperm.defectos_menores || {};
+      const hasMay = Object.keys(may).length > 0;
+      const hasMen = Object.keys(men).length > 0;
+      if (!hasMay && !hasMen) return '';
+
+      const renderRows = (obj, total) => Object.entries(obj).map(([k, v]) => {
+        const pct = parseFloat(v) * 100;
+        return `<tr>
+          <td>${k}</td>
+          <td>${(parseFloat(v)*100).toFixed(2)}%</td>
+          <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(pct*5,100)}%"></div></div></td>
+        </tr>`;
+      }).join('') + `<tr class="def-total"><td>Total</td><td>${(total*100).toFixed(2)}%</td><td></td></tr>`;
+
+      return `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:4px;">
+          ${hasMay ? `<div>
+            <div style="font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--mid);margin-bottom:8px;">Defectos mayores</div>
+            <table class="def-table">
+              <thead><tr><th>Defecto</th><th>%</th><th></th></tr></thead>
+              <tbody>${renderRows(may, esperm.total_defectos_mayores || 0)}</tbody>
+            </table>
+          </div>` : ''}
+          ${hasMen ? `<div>
+            <div style="font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--mid);margin-bottom:8px;">Defectos menores</div>
+            <table class="def-table">
+              <thead><tr><th>Defecto</th><th>%</th><th></th></tr></thead>
+              <tbody>${renderRows(men, esperm.total_defectos_menores || 0)}</tbody>
+            </table>
+          </div>` : ''}
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--mid);margin-top:12px;">
+          Total defectos: <strong style="color:var(--carbon);">${((esperm.total_defectos||0)*100).toFixed(2)}%</strong>
+        </div>`;
+    }
+
+    function renderISperm(data) {
+      if (!data || !Object.keys(data).length) return '';
+      return `
+        <div style="margin-top:16px;">
+          <div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--mid);margin-bottom:12px;padding-bottom:8px;border-top:1px solid var(--bone);padding-top:16px;">iSperm mCASA</div>
+          <div class="data-grid">
+            ${Object.entries(data).map(([k,v]) =>
+              `<div class="data-field"><div class="data-label">${k}</div><div class="data-value">${v}</div></div>`
+            ).join('')}
+          </div>
+        </div>`;
+    }
+
+    function openLightbox(url, tipo) {
+      const content = document.getElementById('lightboxContent');
+      content.innerHTML = tipo === 'video'
+        ? `<video src="${url}" controls autoplay style="max-width:90vw;max-height:85vh;"></video>`
+        : `<img src="${url}" style="max-width:90vw;max-height:85vh;object-fit:contain;" />`;
+      document.getElementById('lightbox').classList.add('open');
+    }
+
+    document.getElementById('lightboxClose').addEventListener('click', () => {
+      document.getElementById('lightbox').classList.remove('open');
+      document.getElementById('lightboxContent').innerHTML = '';
+    });
+
+    document.getElementById('lightbox').addEventListener('click', e => {
+      if (e.target === document.getElementById('lightbox')) {
+        document.getElementById('lightbox').classList.remove('open');
+        document.getElementById('lightboxContent').innerHTML = '';
+      }
+    });
+
+    async function deleteCert(id) {
+      const ok = await showConfirm('&iquest;Eliminar este certificado?<br>Se eliminar&aacute;n tambi&eacute;n los archivos adjuntos.');
+      if (!ok) return;
+      const { error } = await sb.from('certificados').delete().eq('id', id);
+      if (error) { showToast('Error al eliminar.', 'error'); return; }
+      showToast('Certificado eliminado correctamente.', 'success');
+      window.location.href = 'toros.html';
+    }
+
+    function showError(msg) {
+      document.getElementById('mainContent').innerHTML = `<div class="error-block">${msg}</div>`;
+    }
+
+    init();
+  </script>
+</body>
+</html>

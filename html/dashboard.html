@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EQUIBOV — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../img/torito.png" />
+  <link href="../css/equibov.css" rel="stylesheet" />
+  <style>
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: var(--white); border: 1px solid var(--bone); border-radius: 3px; padding: 24px 22px; opacity: 0; animation: fadeUp 0.5s ease forwards; }
+    .stat-card:nth-child(1) { animation-delay: 0.15s; }
+    .stat-card:nth-child(2) { animation-delay: 0.22s; }
+    .stat-card:nth-child(3) { animation-delay: 0.29s; }
+    .stat-card:nth-child(4) { animation-delay: 0.36s; }
+    .stat-label { font-size: 9px; letter-spacing: 0.2em; color: var(--mid); text-transform: uppercase; margin-bottom: 12px; }
+    .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 44px; font-weight: 500; color: var(--carbon); line-height: 1; }
+    .stat-sub { font-size: 10px; color: var(--light); margin-top: 6px; letter-spacing: 0.05em; }
+
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel { background: var(--white); border: 1px solid var(--bone); border-radius: 3px; overflow: hidden; opacity: 0; animation: fadeUp 0.5s ease forwards; }
+    .panel:nth-child(1) { animation-delay: 0.4s; }
+    .panel:nth-child(2) { animation-delay: 0.48s; }
+    .panel-header { padding: 18px 22px; border-bottom: 1px solid var(--bone); display: flex; align-items: center; justify-content: space-between; }
+    .panel-header h3 { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dark); }
+    .panel-header a { font-size: 9px; letter-spacing: 0.12em; color: var(--mid); text-decoration: none; transition: color 0.2s; }
+    .panel-header a:hover { color: var(--carbon); }
+    .panel-body { padding: 8px 0; }
+
+    .recent-row { display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; padding: 12px 22px; border-bottom: 1px solid rgba(211,209,199,0.4); transition: background 0.15s; cursor: pointer; gap: 12px; }
+    .recent-row:last-child { border-bottom: none; }
+    .recent-row:hover { background: var(--cream); }
+    .recent-row .toro-name { font-size: 12px; color: var(--carbon); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-row .hacienda { font-size: 10px; color: var(--mid); letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-row .fecha { font-size: 10px; color: var(--light); white-space: nowrap; }
+
+    .hacienda-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 22px; border-bottom: 1px solid rgba(211,209,199,0.4); transition: background 0.15s; cursor: pointer; }
+    .hacienda-row:last-child { border-bottom: none; }
+    .hacienda-row:hover { background: var(--cream); }
+    .hacienda-row .hac-name { font-size: 12px; color: var(--carbon); }
+    .hacienda-row .hac-meta { font-size: 10px; color: var(--light); letter-spacing: 0.04em; }
+
+    .loading-row { padding: 14px 22px; font-size: 10px; color: var(--light); letter-spacing: 0.1em; animation: pulse 1.4s ease infinite; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .bottom-grid { grid-template-columns: 1fr; }
+      .recent-row { grid-template-columns: 1fr; gap: 4px; }
+      .recent-row .fecha { justify-self: start; }
+    }
+    @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Dashboard</h2>
+        <p id="fechaHoy">—</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn-secondary" id="btnExportar">↓ Exportar Excel</button>
+        <a class="btn-primary" href="certificado-nuevo.html">+ Nuevo certificado</a>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Toros registrados</div>
+        <div class="stat-value" id="statToros">—</div>
+        <div class="stat-sub">en todas las haciendas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Haciendas</div>
+        <div class="stat-value" id="statHaciendas">—</div>
+        <div class="stat-sub">activas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Propietarios</div>
+        <div class="stat-value" id="statPropietarios">—</div>
+        <div class="stat-sub">registrados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Certificados</div>
+        <div class="stat-value" id="statCertificados">—</div>
+        <div class="stat-sub">emitidos</div>
+      </div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Certificados recientes</h3>
+          <a href="certificados.html">Ver todos &rarr;</a>
+        </div>
+        <div class="panel-body" id="listaCertificados">
+          <div class="loading-row">Cargando...</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Haciendas activas</h3>
+          <a href="haciendas.html">Ver todas &rarr;</a>
+        </div>
+        <div class="panel-body" id="listaHaciendas">
+          <div class="loading-row">Cargando...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL EXPORTAR -->
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal" style="max-width:420px;">
+      <h3>Exportar a Excel</h3>
+
+      <div class="field-group">
+        <label class="field-label" for="exportHacienda">Hacienda</label>
+        <select class="field-input" id="exportHacienda">
+          <option value="">Todas las haciendas</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="exportAnio">Año</label>
+        <select class="field-input" id="exportAnio">
+          <option value="">Todos los años</option>
+        </select>
+      </div>
+
+      <div style="margin-top:8px;padding:12px 14px;background:var(--cream);border-radius:2px;border:1px solid var(--bone);">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--mid);margin-bottom:6px;">Incluye</div>
+        <div style="font-size:11px;color:var(--dark);line-height:1.7;">
+          ✓ Hoja de Toros<br>
+          ✓ Hoja de Certificados (con examen clínico, espermiograma y complementarios)
+        </div>
+      </div>
+
+      <div class="error-msg" id="exportError"></div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btnCancelarExport">Cancelar</button>
+        <button class="btn-primary" id="btnConfirmarExport">↓ Descargar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/toast.js"></script>
+  <script>
+    const fechaHoy = document.getElementById('fechaHoy');
+    const hoy = new Date();
+    fechaHoy.textContent = hoy.toLocaleDateString('es-CO', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    async function init() {
+      document.body.insertAdjacentHTML('afterbegin', createSidebar('dashboard'));
+      const session = await checkSession();
+      if (!session) return;
+      document.getElementById('userEmail').textContent = session.user.email;
+      document.getElementById('btnLogout').addEventListener('click', logout);
+      loadStats();
+      loadCertificadosRecientes();
+      loadHaciendas();
+    }
+
+    async function loadStats() {
+      const [toros, haciendas, propietarios, certificados] = await Promise.all([
+        sb.from('toros').select('id', { count: 'exact', head: true }),
+        sb.from('haciendas').select('id', { count: 'exact', head: true }),
+        sb.from('propietarios').select('id', { count: 'exact', head: true }),
+        sb.from('certificados').select('id', { count: 'exact', head: true }),
+      ]);
+      document.getElementById('statToros').textContent        = toros.count ?? 0;
+      document.getElementById('statHaciendas').textContent    = haciendas.count ?? 0;
+      document.getElementById('statPropietarios').textContent = propietarios.count ?? 0;
+      document.getElementById('statCertificados').textContent = certificados.count ?? 0;
+    }
+
+    async function loadCertificadosRecientes() {
+      const { data, error } = await sb
+        .from('certificados')
+        .select(`id, fecha, conclusion, toros ( nombre, numero, haciendas ( nombre ) )`)
+        .order('fecha', { ascending: false })
+        .limit(6);
+      const lista = document.getElementById('listaCertificados');
+      if (error || !data?.length) { lista.innerHTML = '<div class="empty-state">Sin certificados a&uacute;n</div>'; return; }
+      lista.innerHTML = data.map(c => {
+        const toro     = c.toros?.nombre || c.toros?.numero || '&mdash;';
+        const hacienda = c.toros?.haciendas?.nombre || '&mdash;';
+        const fecha    = new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+        return `<div class="recent-row" onclick="window.location='certificado-detalle.html?id=${c.id}'">
+          <span class="toro-name">${toro}</span>
+          <span class="hacienda">${hacienda}</span>
+          <span class="fecha">${fecha}</span>
+        </div>`;
+      }).join('');
+    }
+
+    async function loadHaciendas() {
+      const { data, error } = await sb
+        .from('haciendas')
+        .select(`id, nombre, ubicacion, propietarios ( nombre ), toros ( id )`)
+        .order('created_at', { ascending: false })
+        .limit(6);
+      const lista = document.getElementById('listaHaciendas');
+      if (error || !data?.length) { lista.innerHTML = '<div class="empty-state">Sin haciendas registradas</div>'; return; }
+      lista.innerHTML = data.map(h => {
+        const numToros = h.toros?.length ?? 0;
+        return `<div class="hacienda-row" onclick="window.location='haciendas.html?id=${h.id}'">
+          <div>
+            <div class="hac-name">${h.nombre}</div>
+            <div class="hac-meta">${h.propietarios?.nombre || '&mdash;'}</div>
+          </div>
+          <span class="badge">${numToros} toro${numToros !== 1 ? 's' : ''}</span>
+        </div>`;
+      }).join('');
+    }
+
+    init();
+
+    // ── MODAL EXPORTAR ──
+    let haciendas = [];
+
+    async function loadHaciendasExport() {
+      const { data } = await sb.from('haciendas').select('id, nombre').order('nombre');
+      haciendas = data || [];
+      const sel = document.getElementById('exportHacienda');
+      haciendas.forEach(h => {
+        sel.innerHTML += `<option value="${h.id}">${h.nombre}</option>`;
+      });
+
+      // Años disponibles desde certificados
+      const { data: certs } = await sb.from('certificados').select('fecha').order('fecha');
+      const anios = [...new Set((certs || []).map(c => c.fecha?.substring(0,4)).filter(Boolean))].sort((a,b) => b-a);
+      const selAnio = document.getElementById('exportAnio');
+      anios.forEach(a => { selAnio.innerHTML += `<option value="${a}">${a}</option>`; });
+    }
+
+    document.getElementById('btnExportar').addEventListener('click', async () => {
+      if (!haciendas.length) await loadHaciendasExport();
+      document.getElementById('exportError').classList.remove('visible');
+      document.getElementById('exportModal').classList.add('open');
+    });
+
+    document.getElementById('btnCancelarExport').addEventListener('click', () => {
+      document.getElementById('exportModal').classList.remove('open');
+    });
+
+    document.getElementById('exportModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('exportModal'))
+        document.getElementById('exportModal').classList.remove('open');
+    });
+
+    document.getElementById('btnConfirmarExport').addEventListener('click', async () => {
+      const haciendaId = document.getElementById('exportHacienda').value;
+      const anio       = document.getElementById('exportAnio').value;
+      const btn        = document.getElementById('btnConfirmarExport');
+
+      btn.textContent = 'Exportando...';
+      btn.disabled = true;
+
+      try {
+        // ── QUERY TOROS ──
+        let torosQ = sb.from('toros').select(`
+          numero, nombre, raza, registro, edad_meses,
+          haciendas ( id, nombre, ubicacion, propietarios ( nombre, contacto, ubicacion ) )
+        `).order('nombre');
+        if (haciendaId) torosQ = torosQ.eq('hacienda_id', haciendaId);
+        const { data: torosRaw } = await torosQ;
+
+        // IDs de toros filtrados (para filtrar certificados por hacienda)
+        const toroIds = (torosRaw || []).map(t => t.id).filter(Boolean);
+
+        // ── QUERY CERTIFICADOS ──
+        let certsQ = sb.from('certificados').select(`
+          fecha, veterinario_nombre, ciudad_expedicion, metodo_colecta, validez_dias, conclusion,
+          toros ( id, nombre, numero, raza, haciendas ( nombre, propietarios ( nombre ) ) ),
+          examen_clinico ( perimetro_escrotal, tam_derecho, tam_izquierdo, posicion_derecho, posicion_izquierdo, consistencia_derecho, consistencia_izquierdo, sensibilidad_derecho, sensibilidad_izquierdo, pene, prepucio, libido, vesiculas_seminales, prostata, ampollas ),
+          espermiograma ( olor, aspecto, ph, volumen_ml, motilidad_masal, motilidad_total, motilidad_progresiva, vigor, concentracion, total_defectos_mayores, total_defectos_menores, total_defectos ),
+          examenes_complementarios ( integridad_con, integridad_sin, homogeneidad_parenquima, puntos_hiperecogenicos, observaciones_eco )
+        `).order('fecha', { ascending: false });
+
+        if (anio) {
+          certsQ = certsQ
+            .gte('fecha', `${anio}-01-01`)
+            .lte('fecha', `${anio}-12-31`);
+        }
+
+        const { data: certsRaw } = await certsQ;
+
+        // Filtrar certificados por hacienda si aplica
+        let certs = certsRaw || [];
+        if (haciendaId && toroIds.length) {
+          certs = certs.filter(c => toroIds.includes(c.toros?.id));
+        }
+
+        const toros = torosRaw || [];
+
+        if (!toros.length && !certs.length) {
+          document.getElementById('exportError').textContent = 'No hay datos con los filtros seleccionados.';
+          document.getElementById('exportError').classList.add('visible');
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        // ── HOJA 1: TOROS ──
+        const torosData = toros.map(t => ({
+          'Número / Arete':       t.numero || '',
+          'Nombre':               t.nombre || '',
+          'Raza':                 t.raza || '',
+          'Registro':             t.registro || '',
+          'Edad (meses)':         t.edad_meses || '',
+          'Hacienda':             t.haciendas?.nombre || '',
+          'Ubicación hacienda':   t.haciendas?.ubicacion || '',
+          'Propietario':          t.haciendas?.propietarios?.nombre || '',
+          'Contacto propietario': t.haciendas?.propietarios?.contacto || '',
+          'Ubicación propietario':t.haciendas?.propietarios?.ubicacion || '',
+        }));
+        const wsToros = XLSX.utils.json_to_sheet(torosData.length ? torosData : [{}]);
+        wsToros['!cols'] = [14,24,14,14,12,18,20,22,14,20].map(w => ({wch:w}));
+        XLSX.utils.book_append_sheet(wb, wsToros, 'Toros');
+
+        // ── HOJA 2: CERTIFICADOS ──
+        const certsData = certs.map(c => {
+          const cl = c.examen_clinico;
+          const es = c.espermiograma;
+          const cp = c.examenes_complementarios;
+          const vence = c.fecha && c.validez_dias
+            ? (() => { const d = new Date(c.fecha+'T00:00:00'); d.setDate(d.getDate()+c.validez_dias); return d.toLocaleDateString('es-CO'); })()
+            : '';
+          return {
+            'Fecha': c.fecha || '', 'Veterinario': c.veterinario_nombre || '',
+            'Ciudad': c.ciudad_expedicion || '', 'Método colecta': c.metodo_colecta || '',
+            'Validez (días)': c.validez_dias || '', 'Fecha vencimiento': vence,
+            'Toro': c.toros?.nombre || c.toros?.numero || '', 'Número arete': c.toros?.numero || '',
+            'Raza': c.toros?.raza || '', 'Hacienda': c.toros?.haciendas?.nombre || '',
+            'Propietario': c.toros?.haciendas?.propietarios?.nombre || '',
+            'Perímetro escrotal (cm)': cl?.perimetro_escrotal || '',
+            'Tamaño testículo D': cl?.tam_derecho || '', 'Tamaño testículo I': cl?.tam_izquierdo || '',
+            'Posición D': cl?.posicion_derecho || '', 'Posición I': cl?.posicion_izquierdo || '',
+            'Consistencia D': cl?.consistencia_derecho || '', 'Consistencia I': cl?.consistencia_izquierdo || '',
+            'Sensibilidad D': cl?.sensibilidad_derecho || '', 'Sensibilidad I': cl?.sensibilidad_izquierdo || '',
+            'Pene': cl?.pene || '', 'Prepucio': cl?.prepucio || '', 'Libido': cl?.libido || '',
+            'Vesículas seminales': cl?.vesiculas_seminales || '', 'Próstata': cl?.prostata || '',
+            'Ampollas': cl?.ampollas || '', 'Olor': es?.olor || '', 'Aspecto': es?.aspecto || '',
+            'pH': es?.ph || '', 'Volumen (mL)': es?.volumen_ml || '',
+            'Motilidad masal': es?.motilidad_masal || '', 'Motilidad total (%)': es?.motilidad_total || '',
+            'Motilidad progresiva (%)': es?.motilidad_progresiva || '', 'Vigor': es?.vigor || '',
+            'Concentración (×10⁶/mL)': es?.concentracion || '',
+            'Total defectos mayores': es?.total_defectos_mayores || '',
+            'Total defectos menores': es?.total_defectos_menores || '',
+            'Total defectos': es?.total_defectos || '',
+            'Integridad membrana con (%)': cp?.integridad_con || '',
+            'Integridad membrana sin (%)': cp?.integridad_sin || '',
+            'Homogeneidad parénquima': cp?.homogeneidad_parenquima ?? '',
+            'Puntos hiperecogénicos': cp?.puntos_hiperecogenicos ?? '',
+            'Observaciones eco': cp?.observaciones_eco || '',
+            'Conclusión': c.conclusion || '',
+          };
+        });
+        const wsCerts = XLSX.utils.json_to_sheet(certsData.length ? certsData : [{}]);
+        wsCerts['!cols'] = Array(42).fill({wch:18});
+        XLSX.utils.book_append_sheet(wb, wsCerts, 'Certificados');
+
+        // Nombre del archivo
+        const hNombre = haciendaId ? haciendas.find(h => h.id === haciendaId)?.nombre || 'hacienda' : 'todas';
+        const fechaArchivo = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+        XLSX.writeFile(wb, `EQUIBOV_${hNombre}${anio ? '_'+anio : ''}_${fechaArchivo}.xlsx`);
+
+        document.getElementById('exportModal').classList.remove('open');
+        showToast('Archivo Excel descargado correctamente', 'success');
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('exportError').textContent = 'Error al exportar. Intente de nuevo.';
+        document.getElementById('exportError').classList.add('visible');
+      } finally {
+        btn.textContent = '↓ Descargar';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

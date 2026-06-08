@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EQUIBOV — Propietarios</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../img/torito.png" />
+  <link href="../css/equibov.css" rel="stylesheet" />
+  <style>
+    .table-wrap { opacity: 0; animation: fadeUp 0.45s ease 0.12s forwards; }
+    @media (prefers-reduced-motion: reduce) {
+      .table-wrap { opacity: 1; animation: none; }
+      tr { opacity: 1 !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Propietarios</h2>
+        <p id="totalLabel">Cargando...</p>
+      </div>
+      <button class="btn-primary" id="btnNuevo">+ Nuevo propietario</button>
+    </div>
+
+    <div class="toolbar">
+      <input class="search-input" type="text" id="searchInput" placeholder="Buscar por nombre o ubicación..." />
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Contacto</th>
+            <th>Ubicación</th>
+            <th>Haciendas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tablebody">
+          <tr><td colspan="5"><div class="loading-state">Cargando propietarios...</div></td></tr>
+        </tbody>
+      </table>
+      <div class="pagination" id="pagination">
+        <button class="page-btn" id="pagePrev" disabled>← Anterior</button>
+        <div id="pageNumbers"></div>
+        <button class="page-btn" id="pageNext" disabled>Siguiente →</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 id="modalTitle">Nuevo propietario</h3>
+      <div class="field-group">
+        <label class="field-label" for="fNombre">Nombre / Razón social *</label>
+        <input class="field-input" type="text" id="fNombre" placeholder="Ej: Agropecuaria El Barzal" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="fContacto">Teléfono / Contacto</label>
+        <input class="field-input" type="text" id="fContacto" placeholder="Ej: 3001234567" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="fUbicacion">Ubicación</label>
+        <input class="field-input" type="text" id="fUbicacion" placeholder="Ej: Montería, Córdoba" />
+      </div>
+      <div class="error-msg" id="modalError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btnCancelar">Cancelar</button>
+        <button class="btn-primary" id="btnGuardar">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/toast.js"></script>
+  <script>
+    let allData    = [];
+    let editingId  = null;
+    const PAGE_SIZE = 20;
+    let currentPage = 1;
+
+    function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+    async function init() {
+      document.body.insertAdjacentHTML('afterbegin', createSidebar('propietarios'));
+      const session = await checkSession();
+      if (!session) return;
+      currentUser = session.user;
+      document.getElementById('userEmail').textContent = currentUser.email;
+      document.getElementById('btnLogout').addEventListener('click', logout);
+      loadPropietarios();
+    }
+
+    async function loadPropietarios() {
+      const { data, error } = await sb
+        .from('propietarios')
+        .select('*, haciendas(id)')
+        .order('nombre');
+
+      if (error) { renderError(); return; }
+      allData = data || [];
+      paginateAndRender(allData);
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tablebody');
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">Sin propietarios registrados a\u00fan</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map((p, i) => {
+        const delay = (0.08 + i * 0.035).toFixed(3);
+        const n = p.haciendas?.length ?? 0;
+        return `<tr style="opacity:0;animation:fadeUp 0.3s ease ${delay}s forwards;">
+          <td data-label="Nombre"><strong>${p.nombre}</strong></td>
+          <td data-label="Contacto" class="secondary">${p.contacto || '\u2014'}</td>
+          <td data-label="Ubicaci\u00f3n" class="secondary">${p.ubicacion || '\u2014'}</td>
+          <td data-label="Haciendas"><span class="badge">${n} hacienda${n !== 1 ? 's' : ''}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-icon" onclick="openEdit('${p.id}')">editar</button>
+              <button class="btn-icon danger" onclick="deleteProp('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">eliminar</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderError() {
+      document.getElementById('tablebody').innerHTML =
+        '<tr><td colspan="5"><div class="empty-state">Error al cargar datos</div></td></tr>';
+    }
+
+    function paginateAndRender(fullData) {
+      const total = fullData.length;
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const slice = fullData.slice(start, start + PAGE_SIZE);
+      document.getElementById('totalLabel').textContent =
+        `${total} propietario${total !== 1 ? 's' : ''} registrado${total !== 1 ? 's' : ''}`;
+      renderTable(slice);
+      renderPagination(total);
+    }
+
+    function renderPagination(total) {
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      document.getElementById('pagePrev').disabled = currentPage <= 1;
+      document.getElementById('pageNext').disabled = currentPage >= totalPages;
+      let html = '';
+      const range = 2;
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+          html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        } else if (i === currentPage - range - 1 || i === currentPage + range + 1) {
+          html += '<span class="page-info">...</span>';
+        }
+      }
+      document.getElementById('pageNumbers').innerHTML = html;
+    }
+
+    function goToPage(n) { currentPage = n; paginateAndRender(allData); }
+
+    document.getElementById('pagePrev').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; paginateAndRender(allData); }
+    });
+    document.getElementById('pageNext').addEventListener('click', () => {
+      const totalPages = Math.ceil(allData.length / PAGE_SIZE) || 1;
+      if (currentPage < totalPages) { currentPage++; paginateAndRender(allData); }
+    });
+
+    document.getElementById('searchInput').addEventListener('input', debounce(e => {
+      const q = e.target.value.toLowerCase();
+      const filtered = allData.filter(p =>
+        p.nombre?.toLowerCase().includes(q) ||
+        p.ubicacion?.toLowerCase().includes(q) ||
+        p.contacto?.toLowerCase().includes(q)
+      );
+      currentPage = 1;
+      paginateAndRender(filtered);
+    }, 200));
+
+    document.getElementById('btnNuevo').addEventListener('click', () => {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Nuevo propietario';
+      document.getElementById('fNombre').value = '';
+      document.getElementById('fContacto').value = '';
+      document.getElementById('fUbicacion').value = '';
+      clearModalError();
+      openModal();
+    });
+
+    function openEdit(id) {
+      const p = allData.find(x => x.id === id);
+      if (!p) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = 'Editar propietario';
+      document.getElementById('fNombre').value = p.nombre || '';
+      document.getElementById('fContacto').value = p.contacto || '';
+      document.getElementById('fUbicacion').value = p.ubicacion || '';
+      clearModalError();
+      openModal();
+    }
+
+    document.getElementById('btnGuardar').addEventListener('click', async () => {
+      const nombre = document.getElementById('fNombre').value.trim();
+      const contacto = document.getElementById('fContacto').value.trim();
+      const ubicacion = document.getElementById('fUbicacion').value.trim();
+      if (!nombre) { showModalError('El nombre es obligatorio.'); return; }
+      const payload = { nombre, contacto: contacto || null, ubicacion: ubicacion || null };
+      let error;
+      if (editingId) {
+        ({ error } = await sb.from('propietarios').update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await sb.from('propietarios').insert({ ...payload, creado_por: currentUser.id }));
+      }
+      if (error) { showModalError('Error al guardar. Intente de nuevo.'); return; }
+      closeModal();
+      showToast(editingId ? 'Propietario actualizado correctamente.' : 'Propietario creado correctamente.', 'success');
+      loadPropietarios();
+    });
+
+    async function deleteProp(id, nombre) {
+      const ok = await showConfirm(`\u00bfEliminar a "${nombre}"?<br>Se eliminar\u00e1n tambi\u00e9n sus haciendas y toros asociados.`);
+      if (!ok) return;
+      const { error } = await sb.from('propietarios').delete().eq('id', id);
+      if (error) { showToast('Error al eliminar. Verifique que no tenga registros dependientes.', 'error'); return; }
+      showToast('Propietario eliminado correctamente.', 'success');
+      loadPropietarios();
+    }
+
+    function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+    function showModalError(msg) { const el = document.getElementById('modalError'); el.textContent = msg; el.classList.add('visible'); }
+    function clearModalError()   { document.getElementById('modalError').classList.remove('visible'); }
+
+    document.getElementById('btnCancelar').addEventListener('click', closeModal);
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    });
+
+    init();
+  </script>
+</body>
+</html>
