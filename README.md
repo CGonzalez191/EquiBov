@@ -21,8 +21,8 @@ Aplicación web para el registro clínico y la gestión de certificados androló
 
 ```
 EquiBov/
+├── *.html        # Páginas de la aplicación
 ├── css/          # Estilos
-├── html/         # Páginas de la aplicación
 ├── img/          # Recursos gráficos
 └── js/           # Lógica de frontend
 ```

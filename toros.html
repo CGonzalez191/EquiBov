@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EQUIBOV — Toros</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/png" href="../img/torito.png" />
-  <link href="../css/equibov.css" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="img/torito.png" />
+  <link href="css/equibov.css" rel="stylesheet" />
   <style>
     .panel-overlay { display: none; position: fixed; inset: 0; background: rgba(44,44,42,0.2); z-index: 140; }
     .panel-overlay.open { display: block; }
@@ -176,10 +176,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/config.js"></script>
-  <script src="../js/sidebar.js"></script>
-  <script src="../js/auth.js"></script>
-  <script src="../js/toast.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/toast.js"></script>
   <script>
     let allData    = [];
     let haciendas  = [];
@@ -275,7 +275,7 @@
         return `<tr style="opacity:0;animation:fadeUp 0.3s ease ${delay}s forwards;">
           <td data-label="Toro">
             <div class="toro-cell">
-              <div class="toro-avatar"><img class="toro-icon" src="../img/torito.png" alt="" /></div>
+              <div class="toro-avatar"><img class="toro-icon" src="img/torito.png" alt="" /></div>
               <div>
                 <div class="name">${t.nombre || t.numero}</div>
                 <div class="numero">${t.nombre ? t.numero : ''}</div>
