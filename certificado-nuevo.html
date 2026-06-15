@@ -763,14 +763,14 @@
       document.getElementById('optReserva').className = 'conclusion-opt' + (tipo === 'reserva' ? ' selected-reserva' : '');
       document.getElementById('optNoApto').className  = 'conclusion-opt' + (tipo === 'no-apto' ? ' selected-no-apto' : '');
       const prefixes = {
-        'apto':    'ALTO POTENCIAL DE FERTILIDAD — ',
-        'reserva': 'MODERADO POTENCIAL DE FERTILIDAD — ',
-        'no-apto': 'BAJO POTENCIAL DE FERTILIDAD — '
+        'apto':    'ALTO POTENCIAL DE FERTILIDAD —',
+        'reserva': 'MODERADO POTENCIAL DE FERTILIDAD —',
+        'no-apto': 'BAJO POTENCIAL DE FERTILIDAD —'
       };
       const textarea = document.getElementById('conclTexto');
       const newPrefix = prefixes[tipo];
       if (!textarea.value) {
-        textarea.value = newPrefix;
+        textarea.value = newPrefix + ' ';
       } else {
         const oldPrefix = Object.values(prefixes).find(p => textarea.value.startsWith(p));
         if (oldPrefix) {
