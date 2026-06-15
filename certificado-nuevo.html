@@ -512,6 +512,9 @@
     function getConclusionTipo(texto) {
       if (!texto) return null;
       const up = texto.toUpperCase();
+      if (up.startsWith('BAJO POTENCIAL'))     return 'no-apto';
+      if (up.startsWith('MODERADO POTENCIAL')) return 'reserva';
+      if (up.startsWith('ALTO POTENCIAL'))     return 'apto';
       if (up.includes('NO APTO')) return 'no-apto';
       if (up.includes('RESERVA')) return 'reserva';
       if (up.includes('APTO'))    return 'apto';

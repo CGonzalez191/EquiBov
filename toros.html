@@ -246,6 +246,9 @@
     function getConclusionBadge(conclusion) {
       if (!conclusion) return '<span class="badge">&mdash;</span>';
       const up = conclusion.toUpperCase();
+      if (up.startsWith('BAJO POTENCIAL'))     return '<span class="badge no-apto">Bajo potencial</span>';
+      if (up.startsWith('MODERADO POTENCIAL')) return '<span class="badge reserva">Moderado potencial</span>';
+      if (up.startsWith('ALTO POTENCIAL'))     return '<span class="badge apto">Alto potencial</span>';
       if (up.includes('APTO PARA')) return '<span class="badge apto">Alto potencial</span>';
       if (up.includes('RESERVA') || up.includes('RESERVAS')) return '<span class="badge reserva">Moderado potencial</span>';
       if (up.includes('NO APTO')) return '<span class="badge no-apto">Bajo potencial</span>';
