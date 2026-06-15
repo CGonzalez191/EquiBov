@@ -44,7 +44,7 @@ body {
   z-index: 100;
 }
 .sidebar-brand { padding: 0 28px 32px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center; }
-.sidebar-logo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 14px; border: 2px solid rgba(255,255,255,0.12); }
+.sidebar-logo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 14px; border: 2px solid rgba(255,255,255,0.12); background: var(--white); padding: 4px; }
 .sidebar-brand h1 { font-family: 'SOMER', serif; font-size: 28px; font-weight: 600; color: var(--white); line-height: 1; }
 .sidebar-brand span { font-size: 9px; letter-spacing: 0.18em; color: var(--light); display: block; margin-top: 5px; }
 .sidebar-nav { flex: 1; padding: 24px 0; }
