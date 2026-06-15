@@ -765,8 +765,14 @@
         'no-apto': 'BAJO POTENCIAL DE FERTILIDAD — '
       };
       const textarea = document.getElementById('conclTexto');
-      if (!textarea.value || Object.values(prefixes).some(p => textarea.value.startsWith(p))) {
-        textarea.value = prefixes[tipo];
+      const newPrefix = prefixes[tipo];
+      if (!textarea.value) {
+        textarea.value = newPrefix;
+      } else {
+        const oldPrefix = Object.values(prefixes).find(p => textarea.value.startsWith(p));
+        if (oldPrefix) {
+          textarea.value = newPrefix + textarea.value.slice(oldPrefix.length);
+        }
       }
     }
 
@@ -827,7 +833,8 @@
         let certId;
 
         if (editingId) {
-          await sb.from('certificados').update(certPayload).eq('id', editingId);
+          const { error: upErr } = await sb.from('certificados').update(certPayload).eq('id', editingId);
+          if (upErr) throw upErr;
           certId = editingId;
         } else {
           certPayload.creado_por = currentUser.id;
@@ -895,14 +902,20 @@
         };
 
         if (editingId) {
-          await sb.from('examen_clinico').delete().eq('certificado_id', editingId);
-          await sb.from('espermiograma').delete().eq('certificado_id', editingId);
-          await sb.from('examenes_complementarios').delete().eq('certificado_id', editingId);
+          const { error: d1 } = await sb.from('examen_clinico').delete().eq('certificado_id', editingId);
+          if (d1) throw d1;
+          const { error: d2 } = await sb.from('espermiograma').delete().eq('certificado_id', editingId);
+          if (d2) throw d2;
+          const { error: d3 } = await sb.from('examenes_complementarios').delete().eq('certificado_id', editingId);
+          if (d3) throw d3;
         }
 
-        await sb.from('examen_clinico').insert(clinPayload);
-        await sb.from('espermiograma').insert(espPayload);
-        await sb.from('examenes_complementarios').insert(compPayload);
+        const { error: ce } = await sb.from('examen_clinico').insert(clinPayload);
+        if (ce) throw ce;
+        const { error: ee } = await sb.from('espermiograma').insert(espPayload);
+        if (ee) throw ee;
+        const { error: pe } = await sb.from('examenes_complementarios').insert(compPayload);
+        if (pe) throw pe;
 
         if (editingId) {
           for (const f of existingFiles) {
