@@ -489,13 +489,16 @@
   <script src="js/auth.js"></script>
   <script src="js/toast.js"></script>
   <script>
-    let currentStep   = 0;
-    const totalSteps  = 6;
-    let selectedToro  = null;
-    let currentUser   = null;
-    let allToros      = [];
-    let selectedFiles = [];
-    let conclusionType = null;
+    let currentStep     = 0;
+    const totalSteps    = 6;
+    let selectedToro    = null;
+    let currentUser     = null;
+    let allToros        = [];
+    let selectedFiles   = [];
+    let conclusionType  = null;
+    let editingId       = null;
+    let existingFiles   = [];
+    let removedFileIds  = new Set();
 
     const DEFECTOS_MAYORES = [
       'Cabezas anormales', 'Acrosoma anormal', 'Colas enrolladas',
@@ -505,6 +508,15 @@
       'Gota distal', 'Colas dobladas', 'Pieza intermedia anormal',
       'Cabeza suelta', 'Cabeza piriforme', 'C&eacute;lulas epiteliales'
     ];
+
+    function getConclusionTipo(texto) {
+      if (!texto) return null;
+      const up = texto.toUpperCase();
+      if (up.includes('NO APTO')) return 'no-apto';
+      if (up.includes('RESERVA')) return 'reserva';
+      if (up.includes('APTO'))    return 'apto';
+      return null;
+    }
 
     async function init() {
       document.body.insertAdjacentHTML('afterbegin', createSidebar('certificado-nuevo'));
@@ -522,8 +534,14 @@
       await loadToros();
 
       const params = new URLSearchParams(window.location.search);
+      const editId = params.get('id');
       const toroId = params.get('toro');
-      if (toroId) {
+
+      if (editId) {
+        document.querySelector('.page-title h2').textContent = 'Editar Certificado';
+        document.querySelector('.page-title p').textContent = 'Modifique los datos del examen';
+        await loadCertificadoForEdit(editId);
+      } else if (toroId) {
         const t = allToros.find(x => x.id === toroId);
         if (t) selectToro(t);
       }
@@ -559,6 +577,106 @@
       document.getElementById('totalMayores').textContent  = sumMay.toFixed(4);
       document.getElementById('totalMenores').textContent  = sumMen.toFixed(4);
       document.getElementById('totalDefectos').textContent = (sumMay + sumMen).toFixed(4);
+    }
+
+    function setVal(id, val) {
+      const el = document.getElementById(id);
+      if (el && val !== null && val !== undefined && val !== '') el.value = val;
+    }
+
+    async function loadCertificadoForEdit(id) {
+      editingId = id;
+      const [certRes, clinRes, espRes, compRes, archRes] = await Promise.all([
+        sb.from('certificados').select(`*, toros(*)`).eq('id', id).single(),
+        sb.from('examen_clinico').select('*').eq('certificado_id', id).maybeSingle(),
+        sb.from('espermiograma').select('*').eq('certificado_id', id).maybeSingle(),
+        sb.from('examenes_complementarios').select('*').eq('certificado_id', id).maybeSingle(),
+        sb.from('archivos_examen').select('*').eq('certificado_id', id).order('created_at')
+      ]);
+      if (certRes.error) {
+        document.getElementById('stepError').textContent = 'Certificado no encontrado.';
+        return;
+      }
+      const cert = certRes.data;
+      const toro = cert.toros;
+      selectedToro = toro;
+      selectToro(toro.id);
+
+      document.getElementById('gFecha').value = cert.fecha || '';
+      document.getElementById('gVeterinario').value = cert.veterinario_nombre || '';
+      document.getElementById('gCiudad').value = cert.ciudad_expedicion || '';
+      if (cert.metodo_colecta) document.getElementById('gMetodo').value = cert.metodo_colecta;
+      if (cert.validez_dias) document.getElementById('gValidez').value = cert.validez_dias;
+
+      const cl = clinRes.data || {};
+      setVal('cPene', cl.pene);
+      setVal('cPrepucio', cl.prepucio);
+      setVal('cTesticulos', cl.testiculos_ext);
+      setVal('cPerimetro', cl.perimetro_escrotal);
+      setVal('cTamDerecho', cl.tam_derecho);
+      setVal('cTamIzquierdo', cl.tam_izquierdo);
+      setVal('cPosDerecho', cl.posicion_derecho);
+      setVal('cPosIzquierdo', cl.posicion_izquierdo);
+      setVal('cConsDerecho', cl.consistencia_derecho);
+      setVal('cConsIzquierdo', cl.consistencia_izquierdo);
+      setVal('cSensDerecho', cl.sensibilidad_derecho);
+      setVal('cSensIzquierdo', cl.sensibilidad_izquierdo);
+      setVal('cLibido', cl.libido);
+      setVal('cVesiculas', cl.vesiculas_seminales);
+      setVal('cProstata', cl.prostata);
+      setVal('cAmpollas', cl.ampollas);
+
+      const es = espRes.data || {};
+      setVal('eOlor', es.olor);
+      setVal('eAspecto', es.aspecto);
+      setVal('ePH', es.ph);
+      setVal('eVolumen', es.volumen_ml);
+      setVal('eMotMasal', es.motilidad_masal);
+      setVal('eMotTotal', es.motilidad_total);
+      setVal('eMotProg', es.motilidad_progresiva);
+      setVal('eVigor', es.vigor);
+      setVal('eConcentracion', es.concentracion);
+
+      if (es.defectos_mayores) {
+        Object.entries(es.defectos_mayores).forEach(([k, v]) => {
+          const input = document.querySelector(`input[data-defecto="${k}"][data-tipo="mayor"]`);
+          if (input) input.value = v;
+        });
+      }
+      if (es.defectos_menores) {
+        Object.entries(es.defectos_menores).forEach(([k, v]) => {
+          const input = document.querySelector(`input[data-defecto="${k}"][data-tipo="menor"]`);
+          if (input) input.value = v;
+        });
+      }
+      recalcTotales();
+
+      const cp = compRes.data || {};
+      setVal('dConIntegridad', cp.integridad_con);
+      setVal('dSinIntegridad', cp.integridad_sin);
+      setVal('dHomogeneidad', cp.homogeneidad_parenquima);
+      setVal('dPuntos', cp.puntos_hiperecogenicos);
+      setVal('dObservaciones', cp.observaciones_eco);
+
+      if (cp.isperm_resultados) {
+        setVal('iMotTotal', cp.isperm_resultados.MotTotal);
+        setVal('iMotProg', cp.isperm_resultados.MotProg);
+        setVal('iVCL', cp.isperm_resultados.VCL);
+        setVal('iVSL', cp.isperm_resultados.VSL);
+        setVal('iVAP', cp.isperm_resultados.VAP);
+      }
+
+      document.getElementById('conclTexto').value = cert.conclusion || '';
+      const conclTipo = getConclusionTipo(cert.conclusion);
+      if (conclTipo) {
+        conclusionType = conclTipo;
+        document.getElementById('optApto').className    = 'conclusion-opt' + (conclTipo === 'apto'    ? ' selected-apto' : '');
+        document.getElementById('optReserva').className = 'conclusion-opt' + (conclTipo === 'reserva' ? ' selected-reserva' : '');
+        document.getElementById('optNoApto').className  = 'conclusion-opt' + (conclTipo === 'no-apto' ? ' selected-no-apto' : '');
+      }
+
+      existingFiles = archRes.data || [];
+      renderFilePreviews();
     }
 
     function openToroModal() { document.getElementById('toroModal').classList.add('open'); }
@@ -607,17 +725,33 @@
       renderFilePreviews();
     });
 
+    function removeExistingFile(id) {
+      removedFileIds.add(String(id));
+      renderFilePreviews();
+    }
+
     function renderFilePreviews() {
       const grid = document.getElementById('filePreviewGrid');
-      grid.innerHTML = selectedFiles.map((file, i) => {
+      let html = '';
+      existingFiles.forEach(f => {
+        if (removedFileIds.has(String(f.id))) return;
+        const isVideo = f.tipo === 'video';
+        html += `<div class="file-preview-item">
+          ${isVideo ? `<video src="${f.url}" muted></video>` : `<img src="${f.url}" alt="" />`}
+          <div class="file-name">${f.storage_path.split('/').pop()}</div>
+          <button class="remove-btn" onclick="removeExistingFile('${f.id}')">&#10005;</button>
+        </div>`;
+      });
+      selectedFiles.forEach((file, i) => {
         const url = URL.createObjectURL(file);
         const isVideo = file.type.startsWith('video/');
-        return `<div class="file-preview-item">
+        html += `<div class="file-preview-item">
           ${isVideo ? `<video src="${url}" muted></video>` : `<img src="${url}" alt="${file.name}" />`}
           <div class="file-name">${file.name}</div>
           <button class="remove-btn" onclick="selectedFiles.splice(${i},1);renderFilePreviews()">&#10005;</button>
         </div>`;
-      }).join('');
+      });
+      grid.innerHTML = html;
     }
 
     function selectConclusion(tipo) {
@@ -680,20 +814,29 @@
     async function guardarCertificado() {
       document.getElementById('savingOverlay').classList.add('open');
       try {
-        const { data: cert, error: certErr } = await sb.from('certificados').insert({
+        const certPayload = {
           toro_id:            selectedToro.id,
           fecha:              document.getElementById('gFecha').value,
           veterinario_nombre: document.getElementById('gVeterinario').value.trim(),
           ciudad_expedicion:  document.getElementById('gCiudad').value.trim() || null,
           metodo_colecta:     document.getElementById('gMetodo').value,
           validez_dias:       parseInt(document.getElementById('gValidez').value) || 60,
-          conclusion:         document.getElementById('conclTexto').value.trim(),
-          creado_por:         currentUser.id
-        }).select().single();
-        if (certErr) throw certErr;
-        const certId = cert.id;
+          conclusion:         document.getElementById('conclTexto').value.trim()
+        };
 
-        await sb.from('examen_clinico').insert({
+        let certId;
+
+        if (editingId) {
+          await sb.from('certificados').update(certPayload).eq('id', editingId);
+          certId = editingId;
+        } else {
+          certPayload.creado_por = currentUser.id;
+          const { data: cert, error: certErr } = await sb.from('certificados').insert(certPayload).select().single();
+          if (certErr) throw certErr;
+          certId = cert.id;
+        }
+
+        const clinPayload = {
           certificado_id:          certId,
           pene:                    document.getElementById('cPene').value,
           prepucio:                document.getElementById('cPrepucio').value,
@@ -711,13 +854,13 @@
           vesiculas_seminales:     document.getElementById('cVesiculas').value,
           prostata:                document.getElementById('cProstata').value,
           ampollas:                document.getElementById('cAmpollas').value
-        });
+        };
 
         const defMay = {}, defMen = {};
         document.querySelectorAll('input[data-tipo="mayor"]').forEach(i => { if (parseFloat(i.value)) defMay[i.dataset.defecto] = parseFloat(i.value); });
         document.querySelectorAll('input[data-tipo="menor"]').forEach(i => { if (parseFloat(i.value)) defMen[i.dataset.defecto] = parseFloat(i.value); });
 
-        await sb.from('espermiograma').insert({
+        const espPayload = {
           certificado_id:          certId,
           olor:                    document.getElementById('eOlor').value,
           aspecto:                 document.getElementById('eAspecto').value,
@@ -733,7 +876,7 @@
           defectos_menores:        defMen,
           total_defectos_menores:  parseFloat(document.getElementById('totalMenores').textContent) || 0,
           total_defectos:          parseFloat(document.getElementById('totalDefectos').textContent) || 0
-        });
+        };
 
         const isperm = {};
         ['iMotTotal','iMotProg','iVCL','iVSL','iVAP'].forEach(id => {
@@ -741,7 +884,7 @@
           if (v) isperm[id.replace('i','')] = v;
         });
 
-        await sb.from('examenes_complementarios').insert({
+        const compPayload = {
           certificado_id:           certId,
           integridad_con:           parseFloat(document.getElementById('dConIntegridad').value) || null,
           integridad_sin:           parseFloat(document.getElementById('dSinIntegridad').value) || null,
@@ -749,12 +892,30 @@
           puntos_hiperecogenicos:   parseInt(document.getElementById('dPuntos').value),
           observaciones_eco:        document.getElementById('dObservaciones').value.trim() || null,
           isperm_resultados:        isperm
-        });
+        };
+
+        if (editingId) {
+          await sb.from('examen_clinico').delete().eq('certificado_id', editingId);
+          await sb.from('espermiograma').delete().eq('certificado_id', editingId);
+          await sb.from('examenes_complementarios').delete().eq('certificado_id', editingId);
+        }
+
+        await sb.from('examen_clinico').insert(clinPayload);
+        await sb.from('espermiograma').insert(espPayload);
+        await sb.from('examenes_complementarios').insert(compPayload);
+
+        if (editingId) {
+          for (const f of existingFiles) {
+            if (removedFileIds.has(String(f.id))) {
+              await sb.storage.from('examenes-archivos').remove([f.storage_path]);
+              await sb.from('archivos_examen').delete().eq('id', f.id);
+            }
+          }
+        }
 
         for (const file of selectedFiles) {
-          const ext  = file.name.split('.').pop();
           const path = `${currentUser.id}/${certId}/${Date.now()}_${file.name}`;
-          const { data: uploaded, error: upErr } = await sb.storage
+          const { error: upErr } = await sb.storage
             .from('examenes-archivos')
             .upload(path, file, { upsert: false });
           if (!upErr) {

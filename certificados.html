@@ -184,6 +184,7 @@
             <td onclick="event.stopPropagation()">
               <div class="action-btns">
                 <button class="btn-icon" onclick="window.location='certificado-detalle.html?id=${c.id}'">ver &rarr;</button>
+                <button class="btn-icon" onclick="event.stopPropagation();window.location='certificado-nuevo.html?id=${c.id}'">editar</button>
                 <button class="btn-icon danger" onclick="deleteCert('${c.id}')">eliminar</button>
               </div>
             </td>
