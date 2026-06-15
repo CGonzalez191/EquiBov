@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EQUIBOV — Detalle Certificado</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="img/torito.png" />
   <link href="css/equibov.css" rel="stylesheet" />
   <style>
@@ -12,12 +12,12 @@
     .breadcrumb { font-size: 10px; color: var(--light); letter-spacing: 0.08em; margin-bottom: 8px; }
     .breadcrumb a { color: var(--mid); text-decoration: none; transition: color 0.2s; }
     .breadcrumb a:hover { color: var(--carbon); }
-    .page-header-left h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; }
+    .page-header-left h2 { font-family: 'SOMER', serif; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; }
     .page-header-left p { font-size: 11px; color: var(--mid); margin-top: 4px; letter-spacing: 0.06em; }
     .header-actions { display: flex; gap: 10px; flex-shrink: 0; }
-    .btn-secondary { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; background: none; color: var(--mid); border: 1px solid var(--bone); padding: 10px 16px; border-radius: 2px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
+    .btn-secondary { font-family: 'Raleway', sans-serif; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; background: none; color: var(--mid); border: 1px solid var(--bone); padding: 10px 16px; border-radius: 2px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
     .btn-secondary:hover { border-color: var(--carbon); color: var(--carbon); }
-    .btn-danger { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; background: none; color: #8B2E2E; border: 1px solid #E0AAAA; padding: 10px 16px; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
+    .btn-danger { font-family: 'Raleway', sans-serif; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; background: none; color: #8B2E2E; border: 1px solid #E0AAAA; padding: 10px 16px; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
     .btn-danger:hover { background: #F5EAEA; }
 
     .content-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
@@ -36,7 +36,7 @@
     .data-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
     .data-label { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--light); margin-bottom: 5px; }
     .data-value { font-size: 12px; color: var(--carbon); }
-    .data-value.large { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; }
+    .data-value.large { font-family: 'SOMER', serif; font-size: 22px; font-weight: 500; }
 
     .def-table { width: 100%; border-collapse: collapse; }
     .def-table th { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); padding: 8px 12px; text-align: left; background: var(--cream); border-bottom: 1px solid var(--bone); }
@@ -61,7 +61,7 @@
     .toro-card-inner { display: flex; gap: 14px; align-items: flex-start; }
     .toro-avatar { width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; overflow: hidden; }
     .toro-avatar .toro-icon { width: 100%; height: 100%; object-fit: cover; }
-    .toro-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500; }
+    .toro-name { font-family: 'SOMER', serif; font-size: 18px; font-weight: 500; }
     .toro-meta { font-size: 10px; color: var(--mid); margin-top: 3px; letter-spacing: 0.06em; line-height: 1.6; }
     .toro-link { display: inline-block; margin-top: 12px; font-size: 9px; letter-spacing: 0.15em; color: var(--mid); text-decoration: none; border-bottom: 1px solid var(--bone); padding-bottom: 1px; transition: all 0.2s; }
     .toro-link:hover { color: var(--carbon); border-color: var(--carbon); }
@@ -132,7 +132,7 @@
         border-bottom: 2px solid #2C2C2A;
       }
       .print-header-brand h1 {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'SOMER', serif;
         font-size: 28pt;
         font-weight: 600;
         color: #2C2C2A;
@@ -402,7 +402,7 @@
       const hacienda = toro?.haciendas;
       const tipo  = getConclusionTipo(cert.conclusion);
       const badgeMap = { apto: 'badge-apto', reserva: 'badge-reserva', 'no-apto': 'badge-no-apto', 'sin-datos': '' };
-      const labelMap = { apto: 'APTO PARA REPRODUCCI&Oacute;N', reserva: 'APTO CON RESERVAS', 'no-apto': 'NO APTO PARA REPRODUCCI&Oacute;N', 'sin-datos': 'SIN DIAGN&Oacute;STICO' };
+      const labelMap = { apto: 'ALTO POTENCIAL DE FERTILIDAD', reserva: 'MODERADO POTENCIAL DE FERTILIDAD', 'no-apto': 'BAJO POTENCIAL DE FERTILIDAD', 'sin-datos': 'SIN DIAGN&Oacute;STICO' };
 
       let vencimiento = '&mdash;';
       if (cert.fecha && cert.validez_dias) {

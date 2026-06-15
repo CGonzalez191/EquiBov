@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EQUIBOV — Certificados</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="img/torito.png" />
   <link href="css/equibov.css" rel="stylesheet" />
   <style>
@@ -41,9 +41,9 @@
       <input class="search-input" type="text" id="searchInput" placeholder="Buscar por toro, hacienda o veterinario..." />
       <select class="filter-select" id="filterDiagnostico">
         <option value="">Todos los diagn&oacute;sticos</option>
-        <option value="apto">Apto</option>
-        <option value="reserva">Con reservas</option>
-        <option value="no-apto">No apto</option>
+        <option value="apto">Alto potencial</option>
+        <option value="reserva">Moderado potencial</option>
+        <option value="no-apto">Bajo potencial</option>
       </select>
       <select class="filter-select" id="filterVencimiento">
         <option value="">Todos</option>
@@ -162,7 +162,7 @@
           ? new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
           : '\u2014';
 
-        const badgeLabel = { apto: 'Apto', reserva: 'Con reservas', 'no-apto': 'No apto', '': '\u2014' };
+        const badgeLabel = { apto: 'Alto potencial', reserva: 'Moderado potencial', 'no-apto': 'Bajo potencial', '': '\u2014' };
 
         return `
           <tr style="opacity:0;animation:fadeUp 0.3s ease ${delay}s forwards;" onclick="window.location='certificado-detalle.html?id=${c.id}'">
