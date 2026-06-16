@@ -893,8 +893,7 @@
 
     document.querySelectorAll('.step-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        const n = parseInt(tab.dataset.step);
-        if (n < currentStep) showStep(n);
+        showStep(parseInt(tab.dataset.step));
       });
     });
 
