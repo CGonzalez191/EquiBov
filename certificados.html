@@ -72,7 +72,7 @@
       </table>
     </div>
 
-    <div class="pagination" id="pagination" style="display:none;">
+    <div class="pagination" id="pagination">
       <button class="page-btn" id="pagePrev" disabled>← Anterior</button>
       <span id="pageNumbers"></span>
       <button class="page-btn" id="pageNext" disabled>Siguiente →</button>
@@ -203,7 +203,6 @@
       const total = fullData.length;
       document.getElementById('totalLabel').textContent =
         `${total} certificado${total !== 1 ? 's' : ''} registrado${total !== 1 ? 's' : ''}`;
-      document.getElementById('pagination').style.display = total > PAGE_SIZE ? 'flex' : 'none';
       const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
       if (currentPage > totalPages) currentPage = totalPages;
       const start = (currentPage - 1) * PAGE_SIZE;
