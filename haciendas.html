@@ -6,7 +6,7 @@
   <title>EQUIBOV</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Raleway:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="img/torito.png" />
-  <link href="css/equibov.css" rel="stylesheet" />
+  <link href="css/equibov.css?v=1" rel="stylesheet" />
   <style>
     .detail-panel { position: fixed; top: 0; right: -420px; width: 420px; height: 100vh; background: var(--white); border-left: 1px solid var(--bone); z-index: 150; display: flex; flex-direction: column; transition: right 0.3s ease; overflow-y: auto; }
     .detail-panel.open { right: 0; }
@@ -40,7 +40,7 @@
 </head>
 <body>
 
-  <!-- Sidebar injected by js/sidebar.js -->
+  <!-- Sidebar injected by js/sidebar.js?v=1 -->
 
   <!-- MAIN -->
   <main class="main">
@@ -129,10 +129,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js"></script>
-  <script src="js/sidebar.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/toast.js"></script>
+  <script src="js/config.js?v=1"></script>
+  <script src="js/sidebar.js?v=1"></script>
+  <script src="js/auth.js?v=1"></script>
+  <script src="js/toast.js?v=1"></script>
   <script>
     let allData     = [];
     let propietarios = [];
