@@ -71,6 +71,12 @@
         </tbody>
       </table>
     </div>
+
+    <div class="pagination" id="pagination" style="display:none;">
+      <button class="page-btn" id="pagePrev" disabled>← Anterior</button>
+      <span id="pageNumbers"></span>
+      <button class="page-btn" id="pageNext" disabled>Siguiente →</button>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -141,8 +147,6 @@
 
     function renderTable(data) {
       const tbody = document.getElementById('tablebody');
-      document.getElementById('totalLabel').textContent =
-        `${data.length} certificado${data.length !== 1 ? 's' : ''} registrado${data.length !== 1 ? 's' : ''}`;
 
       if (!data.length) {
         tbody.innerHTML = `
@@ -197,12 +201,42 @@
 
     function paginateAndRender(fullData) {
       const total = fullData.length;
+      document.getElementById('totalLabel').textContent =
+        `${total} certificado${total !== 1 ? 's' : ''} registrado${total !== 1 ? 's' : ''}`;
+      document.getElementById('pagination').style.display = total > PAGE_SIZE ? 'flex' : 'none';
       const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
       if (currentPage > totalPages) currentPage = totalPages;
       const start = (currentPage - 1) * PAGE_SIZE;
       const slice = fullData.slice(start, start + PAGE_SIZE);
       renderTable(slice);
+      renderPagination(total);
     }
+
+    function renderPagination(total) {
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      document.getElementById('pagePrev').disabled = currentPage <= 1;
+      document.getElementById('pageNext').disabled = currentPage >= totalPages;
+      const range = 2;
+      let html = '';
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+          html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        } else if (i === currentPage - range - 1 || i === currentPage + range + 1) {
+          html += '<span class="page-info">...</span>';
+        }
+      }
+      document.getElementById('pageNumbers').innerHTML = html;
+    }
+
+    function goToPage(n) { currentPage = n; paginateAndRender(allData); }
+
+    document.getElementById('pagePrev').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; paginateAndRender(allData); }
+    });
+
+    document.getElementById('pageNext').addEventListener('click', () => {
+      if (currentPage < Math.ceil(allData.length / PAGE_SIZE)) { currentPage++; paginateAndRender(allData); }
+    });
 
     document.getElementById('searchInput').addEventListener('input', debounce(e => {
       const q    = e.target.value.toLowerCase();

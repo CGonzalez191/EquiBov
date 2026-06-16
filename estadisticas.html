@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EQUIBOV — Estadísticas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="img/torito.png" />
+  <link href="css/equibov.css" rel="stylesheet" />
+  <style>
+    /* ── FILTROS ── */
+    .filters-bar {
+      background: var(--white);
+      border: 1px solid var(--bone);
+      border-radius: 3px;
+      padding: 18px 22px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-end;
+      opacity: 0;
+      animation: fadeUp 0.4s ease 0.05s forwards;
+    }
+    .filter-field { display: flex; flex-direction: column; gap: 6px; }
+    .filter-field label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid); }
+    .filter-field select, .filter-field input {
+      background: var(--cream); border: 1px solid var(--bone); border-radius: 2px;
+      padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 12px;
+      color: var(--carbon); outline: none; transition: border-color 0.2s, background 0.2s;
+      min-width: 150px;
+    }
+    .filter-field select:focus, .filter-field input:focus { border-color: var(--carbon); background: var(--white); }
+    .filter-field select { cursor: pointer; }
+
+    .compare-toggle {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 10px; letter-spacing: 0.1em; color: var(--mid);
+      cursor: pointer; user-select: none;
+      padding: 9px 0;
+    }
+    .compare-toggle input { width: 14px; height: 14px; accent-color: var(--carbon); cursor: pointer; }
+
+    .compare-fields {
+      display: none;
+      gap: 16px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .compare-fields.visible { display: flex; }
+
+    .filter-divider {
+      width: 1px; height: 36px; background: var(--bone); align-self: center;
+    }
+
+    .btn-apply {
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+      background: var(--carbon); color: var(--white); border: none;
+      padding: 10px 22px; border-radius: 2px; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-apply:hover { background: var(--dark); }
+    .btn-apply:disabled { background: var(--light); cursor: default; }
+
+    /* ── MÉTRICAS RESUMEN ── */
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;
+    }
+    .metric-card {
+      background: var(--white); border: 1px solid var(--bone); border-radius: 3px;
+      padding: 20px 22px;
+      opacity: 0; animation: fadeUp 0.4s ease forwards;
+    }
+    .metric-card:nth-child(1) { animation-delay: 0.10s; }
+    .metric-card:nth-child(2) { animation-delay: 0.16s; }
+    .metric-card:nth-child(3) { animation-delay: 0.22s; }
+    .metric-card:nth-child(4) { animation-delay: 0.28s; }
+    .metric-label { font-size: 9px; letter-spacing: 0.2em; color: var(--mid); text-transform: uppercase; margin-bottom: 10px; }
+    .metric-value { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 500; color: var(--carbon); line-height: 1; }
+    .metric-value.warn { color: #8B5E1A; }
+    .metric-value.danger { color: #8B2E2E; }
+    .metric-sub { font-size: 10px; color: var(--light); margin-top: 6px; letter-spacing: 0.05em; }
+
+    /* ── CHART GRID ── */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .chart-card {
+      background: var(--white); border: 1px solid var(--bone); border-radius: 3px;
+      padding: 22px;
+      opacity: 0; animation: fadeUp 0.45s ease forwards;
+    }
+    .chart-card.full { grid-column: 1 / -1; }
+    .chart-card:nth-of-type(1) { animation-delay: 0.30s; }
+    .chart-card:nth-of-type(2) { animation-delay: 0.36s; }
+    .chart-card:nth-of-type(3) { animation-delay: 0.42s; }
+    .chart-card:nth-of-type(4) { animation-delay: 0.48s; }
+    .chart-card:nth-of-type(5) { animation-delay: 0.54s; }
+    .chart-card:nth-of-type(6) { animation-delay: 0.60s; }
+
+    .chart-header {
+      font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid);
+      margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--bone);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .chart-wrap { position: relative; height: 240px; }
+    .chart-wrap.tall { height: 320px; }
+
+    .chart-legend { display: flex; gap: 14px; margin-top: 14px; flex-wrap: wrap; font-size: 10px; color: var(--mid); letter-spacing: 0.04em; }
+    .chart-legend span { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+    .chart-empty { padding: 60px 0; text-align: center; font-size: 11px; color: var(--light); letter-spacing: 0.1em; }
+
+    /* ── RANKING LIST (certificados por hacienda) ── */
+    .ranking-list { display: flex; flex-direction: column; gap: 10px; }
+    .ranking-row { display: flex; align-items: center; gap: 12px; }
+    .ranking-name { font-size: 11px; color: var(--carbon); width: 140px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ranking-bar-bg { flex: 1; height: 8px; background: var(--cream); border-radius: 2px; overflow: hidden; }
+    .ranking-bar-fill { height: 100%; background: var(--carbon); border-radius: 2px; transition: width 0.6s ease; }
+    .ranking-value { font-size: 10px; color: var(--mid); width: 28px; text-align: right; flex-shrink: 0; }
+
+    /* ── EXPIRACIÓN LIST ── */
+    .expira-list { display: flex; flex-direction: column; }
+    .expira-row { display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(211,209,199,0.4); cursor: pointer; transition: background 0.15s; }
+    .expira-row:last-child { border-bottom: none; }
+    .expira-row:hover { background: var(--cream); }
+    .expira-toro { font-size: 12px; color: var(--carbon); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .expira-hacienda { font-size: 10px; color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .expira-fecha { font-size: 10px; white-space: nowrap; padding: 3px 8px; border-radius: 2px; letter-spacing: 0.05em; }
+    .expira-fecha.pronto    { background: #FDF3E3; color: #8B5E1A; border: 1px solid #F0D09A; }
+    .expira-fecha.expirado  { background: #F5EAEA; color: #8B2E2E; border: 1px solid #E0AAAA; }
+
+    .loading-state { padding: 40px; text-align: center; font-size: 11px; color: var(--light); letter-spacing: 0.1em; animation: pulse 1.4s ease infinite; }
+
+    @media (max-width: 1024px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+      .chart-card.full { grid-column: 1; }
+    }
+    @media (max-width: 768px) {
+      .metrics-grid { grid-template-columns: 1fr; }
+      .filters-bar { flex-direction: column; align-items: stretch; }
+      .filter-field select, .filter-field input { min-width: 0; width: 100%; }
+      .filter-divider { display: none; }
+      .compare-fields { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">
+        <h2>Estadísticas</h2>
+        <p id="rangoLabel">Cargando...</p>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters-bar">
+      <div class="filter-field">
+        <label for="fHacienda">Hacienda</label>
+        <select id="fHacienda">
+          <option value="">Todas las haciendas</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="fDesde">Desde</label>
+        <input type="date" id="fDesde" />
+      </div>
+
+      <div class="filter-field">
+        <label for="fHasta">Hasta</label>
+        <input type="date" id="fHasta" />
+      </div>
+
+      <div class="filter-divider"></div>
+
+      <label class="compare-toggle">
+        <input type="checkbox" id="fComparar" />
+        Comparar con otro periodo
+      </label>
+
+      <div class="compare-fields" id="compareFields">
+        <div class="filter-field">
+          <label for="fDesde2">Desde (B)</label>
+          <input type="date" id="fDesde2" />
+        </div>
+        <div class="filter-field">
+          <label for="fHasta2">Hasta (B)</label>
+          <input type="date" id="fHasta2" />
+        </div>
+      </div>
+
+      <div class="filter-divider"></div>
+
+      <button class="btn-apply" id="btnAplicar">Aplicar filtros</button>
+    </div>
+
+    <!-- MÉTRICAS RESUMEN -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Certificados en periodo</div>
+        <div class="metric-value" id="mCertificados">—</div>
+        <div class="metric-sub" id="mCertificadosSub">&nbsp;</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">% Apto</div>
+        <div class="metric-value" id="mApto">—</div>
+        <div class="metric-sub" id="mAptoSub">&nbsp;</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Vencen ≤ 7 días</div>
+        <div class="metric-value warn" id="mPronto">—</div>
+        <div class="metric-sub">certificados</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Expirados</div>
+        <div class="metric-value danger" id="mExpirados">—</div>
+        <div class="metric-sub">certificados</div>
+      </div>
+    </div>
+
+    <!-- GRÁFICAS -->
+    <div class="charts-grid">
+
+      <!-- 1. Distribución de diagnósticos -->
+      <div class="chart-card">
+        <div class="chart-header">Distribución de diagnósticos</div>
+        <div class="chart-wrap" id="wrapDiagnostico">
+          <canvas id="chartDiagnostico" role="img" aria-label="Gráfica de dona mostrando la distribución de diagnósticos entre apto, con reservas y no apto"></canvas>
+        </div>
+        <div class="chart-legend" id="legendDiagnostico"></div>
+      </div>
+
+      <!-- 2. Certificados por mes (comparación) -->
+      <div class="chart-card">
+        <div class="chart-header">Certificados por mes</div>
+        <div class="chart-wrap" id="wrapMes">
+          <canvas id="chartMes" role="img" aria-label="Gráfica de barras mostrando certificados emitidos por mes, comparando periodos si aplica"></canvas>
+        </div>
+        <div class="chart-legend" id="legendMes"></div>
+      </div>
+
+      <!-- 3. Tendencia de defectos -->
+      <div class="chart-card">
+        <div class="chart-header">Tendencia del % total de defectos</div>
+        <div class="chart-wrap" id="wrapDefectos">
+          <canvas id="chartDefectos" role="img" aria-label="Gráfica de línea mostrando la tendencia del porcentaje total de defectos espermáticos a lo largo del tiempo"></canvas>
+        </div>
+        <div class="chart-legend" id="legendDefectos"></div>
+      </div>
+
+      <!-- 4. Promedios clínicos por hacienda -->
+      <div class="chart-card">
+        <div class="chart-header">Promedios clínicos por hacienda</div>
+        <div class="chart-wrap tall" id="wrapClinico">
+          <canvas id="chartClinico" role="img" aria-label="Gráfica de barras mostrando promedios de motilidad total, motilidad progresiva y vigor por hacienda"></canvas>
+        </div>
+        <div class="chart-legend" id="legendClinico"></div>
+      </div>
+
+      <!-- 5. Certificados por hacienda (ranking) -->
+      <div class="chart-card">
+        <div class="chart-header">Certificados por hacienda</div>
+        <div id="wrapRanking"><div class="loading-state">Cargando...</div></div>
+      </div>
+
+      <!-- 6. Vencimientos próximos -->
+      <div class="chart-card">
+        <div class="chart-header">Certificados por vencer / expirados</div>
+        <div id="wrapExpira"><div class="loading-state">Cargando...</div></div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/toast.js"></script>
+  <script>
+    Chart.defaults.font.family = "'DM Mono', monospace";
+    Chart.defaults.font.size = 10;
+    Chart.defaults.color = '#5F5E5A';
+
+    const COLORS = {
+      carbon: '#2C2C2A', dark: '#444441', mid: '#5F5E5A', light: '#B4B2A9',
+      bone: '#D3D1C7', cream: '#F1EFE8',
+      verde: '#3B6D11', naranja: '#8B5E1A', rojo: '#8B2E2E'
+    };
+
+    let chartInstances = {};
+    let haciendas = [];
+
+    async function init() {
+      document.body.insertAdjacentHTML('afterbegin', createSidebar('estadisticas'));
+      const session = await checkSession();
+      if (!session) return;
+      document.getElementById('userEmail').textContent = session.user.email;
+      document.getElementById('btnLogout').addEventListener('click', logout);
+
+      await loadHaciendas();
+      setDefaultDates();
+      attachEvents();
+      await runReport();
+    }
+
+    function setDefaultDates() {
+      const hoy = new Date();
+      const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
+      document.getElementById('fDesde').value = inicioAnio.toISOString().split('T')[0];
+      document.getElementById('fHasta').value = hoy.toISOString().split('T')[0];
+
+      const inicioAnioAnt = new Date(hoy.getFullYear() - 1, 0, 1);
+      const finAnioAnt    = new Date(hoy.getFullYear() - 1, 11, 31);
+      document.getElementById('fDesde2').value = inicioAnioAnt.toISOString().split('T')[0];
+      document.getElementById('fHasta2').value = finAnioAnt.toISOString().split('T')[0];
+    }
+
+    async function loadHaciendas() {
+      const { data } = await sb.from('haciendas').select('id, nombre').order('nombre');
+      haciendas = data || [];
+      const sel = document.getElementById('fHacienda');
+      haciendas.forEach(h => { sel.innerHTML += `<option value="${h.id}">${h.nombre}</option>`; });
+    }
+
+    function attachEvents() {
+      document.getElementById('fComparar').addEventListener('change', e => {
+        document.getElementById('compareFields').classList.toggle('visible', e.target.checked);
+      });
+      document.getElementById('btnAplicar').addEventListener('click', runReport);
+    }
+
+    function fmtFechaCorta(f) {
+      return new Date(f + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+    }
+
+    // ── REPORTE PRINCIPAL ──
+    async function runReport() {
+      const btn = document.getElementById('btnAplicar');
+      btn.disabled = true;
+      btn.textContent = 'Cargando...';
+
+      try {
+        const haciendaId = document.getElementById('fHacienda').value;
+        const desde  = document.getElementById('fDesde').value;
+        const hasta  = document.getElementById('fHasta').value;
+        const comparar = document.getElementById('fComparar').checked;
+        const desde2 = document.getElementById('fDesde2').value;
+        const hasta2 = document.getElementById('fHasta2').value;
+
+        // Label del rango
+        let label = `${fmtFechaCorta(desde)} — ${fmtFechaCorta(hasta)}`;
+        if (haciendaId) {
+          const h = haciendas.find(x => x.id === haciendaId);
+          label += ` · ${h?.nombre || ''}`;
+        }
+        if (comparar) label += `  vs  ${fmtFechaCorta(desde2)} — ${fmtFechaCorta(hasta2)}`;
+        document.getElementById('rangoLabel').textContent = label;
+
+        // Cargar datos periodo A
+        const dataA = await fetchPeriodo(haciendaId, desde, hasta);
+        let dataB = null;
+        if (comparar) dataB = await fetchPeriodo(haciendaId, desde2, hasta2);
+
+        // Datos generales (no dependen de fecha): vencimientos, ranking por hacienda, toros para promedio clínico
+        const dataGeneral = await fetchGeneral(haciendaId);
+
+        renderMetricas(dataA);
+        renderDiagnostico(dataA);
+        renderCertificadosPorMes(dataA, dataB, comparar);
+        renderTendenciaDefectos(dataA, dataB, comparar);
+        renderPromediosClinico(dataGeneral.certificadosTodos, haciendaId);
+        renderRankingHaciendas(dataGeneral.certificadosTodos);
+        renderVencimientos(dataGeneral.certificadosTodos);
+
+      } catch (err) {
+        console.error(err);
+        showToast('Error al generar el reporte', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Aplicar filtros';
+      }
+    }
+
+    // ── FETCH: certificados de un periodo (con filtro hacienda) ──
+    async function fetchPeriodo(haciendaId, desde, hasta) {
+      let q = sb.from('certificados').select(`
+        id, fecha, conclusion, validez_dias,
+        toros!inner ( id, nombre, numero, hacienda_id, haciendas ( id, nombre ) ),
+        espermiograma ( motilidad_total, motilidad_progresiva, vigor, total_defectos )
+      `);
+
+      if (desde) q = q.gte('fecha', desde);
+      if (hasta) q = q.lte('fecha', hasta);
+      if (haciendaId) q = q.eq('toros.hacienda_id', haciendaId);
+
+      const { data, error } = await q.order('fecha');
+      if (error) { console.error(error); return []; }
+      return data || [];
+    }
+
+    // ── FETCH: datos generales (sin filtro de fecha, para vencimientos y rankings) ──
+    async function fetchGeneral(haciendaId) {
+      let q = sb.from('certificados').select(`
+        id, fecha, conclusion, validez_dias,
+        toros!inner ( id, nombre, numero, hacienda_id, haciendas ( id, nombre ) ),
+        espermiograma ( motilidad_total, motilidad_progresiva, vigor )
+      `);
+      if (haciendaId) q = q.eq('toros.hacienda_id', haciendaId);
+      const { data, error } = await q.order('fecha', { ascending: false });
+      if (error) { console.error(error); return { certificadosTodos: [] }; }
+      return { certificadosTodos: data || [] };
+    }
+
+    // ── DIAGNÓSTICO TIPO ──
+    function getDiagTipo(conclusion) {
+      if (!conclusion) return null;
+      const up = conclusion.toUpperCase();
+      if (up.startsWith('BAJO POTENCIAL') || up.includes('NO APTO')) return 'no-apto';
+      if (up.startsWith('MODERADO POTENCIAL') || up.includes('RESERVA')) return 'reserva';
+      if (up.startsWith('ALTO POTENCIAL') || up.includes('APTO')) return 'apto';
+      return null;
+    }
+
+    // ── MÉTRICAS RESUMEN ──
+    function renderMetricas(dataA) {
+      const total = dataA.length;
+      const aptos = dataA.filter(c => getDiagTipo(c.conclusion) === 'apto').length;
+      const pct = total ? Math.round((aptos / total) * 100) : 0;
+
+      document.getElementById('mCertificados').textContent = total;
+      document.getElementById('mCertificadosSub').innerHTML = '&nbsp;';
+      document.getElementById('mApto').textContent = `${pct}%`;
+      document.getElementById('mAptoSub').textContent = total ? `${aptos} de ${total}` : '—';
+
+      // Vencimientos se calculan sobre dataGeneral en renderVencimientos,
+      // pero también actualizamos las tarjetas ahí.
+    }
+
+    function destroyChart(key) {
+      if (chartInstances[key]) { chartInstances[key].destroy(); delete chartInstances[key]; }
+    }
+
+    // ── 1. DISTRIBUCIÓN DE DIAGNÓSTICOS ──
+    function renderDiagnostico(dataA) {
+      destroyChart('diag');
+      const counts = { apto: 0, reserva: 0, 'no-apto': 0, sin: 0 };
+      dataA.forEach(c => {
+        const t = getDiagTipo(c.conclusion);
+        if (t) counts[t]++; else counts.sin++;
+      });
+
+      const total = dataA.length || 1;
+      const labels = ['Apto', 'Con reservas', 'No apto'];
+      const values = [counts.apto, counts.reserva, counts['no-apto']];
+      const colors = [COLORS.verde, COLORS.naranja, COLORS.rojo];
+
+      const wrap = document.getElementById('wrapDiagnostico');
+      const legend = document.getElementById('legendDiagnostico');
+
+      if (!dataA.length) {
+        wrap.innerHTML = '<div class="chart-empty">Sin datos en este periodo</div>';
+        legend.innerHTML = '';
+        return;
+      }
+      if (!wrap.querySelector('canvas')) {
+        wrap.innerHTML = '<canvas id="chartDiagnostico" role="img" aria-label="Gráfica de dona de diagnósticos"></canvas>';
+      }
+
+      chartInstances.diag = new Chart(document.getElementById('chartDiagnostico'), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '65%',
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      legend.innerHTML = labels.map((l, i) => {
+        const pct = Math.round((values[i] / total) * 100);
+        return `<span><span class="legend-dot" style="background:${colors[i]}"></span>${l} ${pct}% (${values[i]})</span>`;
+      }).join('');
+    }
+
+    // ── 2. CERTIFICADOS POR MES ──
+    function renderCertificadosPorMes(dataA, dataB, comparar) {
+      destroyChart('mes');
+      const wrap = document.getElementById('wrapMes');
+      const legend = document.getElementById('legendMes');
+
+      if (!dataA.length && !(dataB && dataB.length)) {
+        wrap.innerHTML = '<div class="chart-empty">Sin datos en este periodo</div>';
+        legend.innerHTML = '';
+        return;
+      }
+      if (!wrap.querySelector('canvas')) {
+        wrap.innerHTML = '<canvas id="chartMes" role="img" aria-label="Gráfica de barras de certificados por mes"></canvas>';
+      }
+
+      const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      const countByMonth = arr => {
+        const c = Array(12).fill(0);
+        arr.forEach(item => { const m = new Date(item.fecha+'T00:00:00').getMonth(); c[m]++; });
+        return c;
+      };
+
+      const countsA = countByMonth(dataA);
+      const datasets = [{ label: 'Periodo A', data: countsA, backgroundColor: COLORS.carbon }];
+
+      if (comparar && dataB) {
+        const countsB = countByMonth(dataB);
+        datasets.unshift({ label: 'Periodo B', data: countsB, backgroundColor: COLORS.bone });
+      }
+
+      chartInstances.mes = new Chart(document.getElementById('chartMes'), {
+        type: 'bar',
+        data: { labels: meses, datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: COLORS.cream }, ticks: { stepSize: 1, precision: 0 } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      if (comparar && dataB) {
+        legend.innerHTML = `
+          <span><span class="legend-dot" style="background:${COLORS.bone}"></span>Periodo B</span>
+          <span><span class="legend-dot" style="background:${COLORS.carbon}"></span>Periodo A</span>`;
+      } else {
+        legend.innerHTML = `<span><span class="legend-dot" style="background:${COLORS.carbon}"></span>Certificados</span>`;
+      }
+    }
+
+    // ── 3. TENDENCIA DE DEFECTOS ──
+    function renderTendenciaDefectos(dataA, dataB, comparar) {
+      destroyChart('def');
+      const wrap = document.getElementById('wrapDefectos');
+      const legend = document.getElementById('legendDefectos');
+
+      const conDefectos = dataA.filter(c => c.espermiograma?.total_defectos != null);
+      const conDefectosB = dataB ? dataB.filter(c => c.espermiograma?.total_defectos != null) : [];
+
+      if (!conDefectos.length && !conDefectosB.length) {
+        wrap.innerHTML = '<div class="chart-empty">Sin datos de espermiograma en este periodo</div>';
+        legend.innerHTML = '';
+        return;
+      }
+      if (!wrap.querySelector('canvas')) {
+        wrap.innerHTML = '<canvas id="chartDefectos" role="img" aria-label="Gráfica de línea de tendencia de defectos"></canvas>';
+      }
+
+      const toSeries = arr => arr.map(c => ({
+        x: c.fecha,
+        y: Math.round((c.espermiograma.total_defectos || 0) * 100 * 100) / 100
+      }));
+
+      const seriesA = toSeries(conDefectos);
+      const datasets = [{
+        label: 'Periodo A',
+        data: seriesA,
+        borderColor: COLORS.carbon,
+        backgroundColor: 'rgba(44,44,42,0.05)',
+        borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: COLORS.carbon,
+        fill: !comparar, tension: 0.25
+      }];
+
+      if (comparar && conDefectosB.length) {
+        datasets.push({
+          label: 'Periodo B',
+          data: toSeries(conDefectosB),
+          borderColor: COLORS.light,
+          borderDash: [4,3],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: COLORS.light,
+          fill: false, tension: 0.25
+        });
+      }
+
+      chartInstances.def = new Chart(document.getElementById('chartDefectos'), {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { type: 'time', time: { unit: 'month' }, grid: { display: false }, ticks: { source: 'auto' } },
+            y: { grid: { color: COLORS.cream }, ticks: { callback: v => v + '%' } }
+          }
+        }
+      });
+
+      if (comparar && conDefectosB.length) {
+        legend.innerHTML = `
+          <span><span class="legend-dot" style="background:${COLORS.carbon}"></span>Periodo A</span>
+          <span><span class="legend-dot" style="background:${COLORS.light}"></span>Periodo B</span>`;
+      } else {
+        legend.innerHTML = `<span><span class="legend-dot" style="background:${COLORS.carbon}"></span>% defectos totales</span>`;
+      }
+    }
+
+    // ── 4. PROMEDIOS CLÍNICOS POR HACIENDA ──
+    function renderPromediosClinico(certs, haciendaId) {
+      destroyChart('clin');
+      const wrap = document.getElementById('wrapClinico');
+      const legend = document.getElementById('legendClinico');
+
+      const conData = certs.filter(c => c.espermiograma && (c.espermiograma.motilidad_total != null || c.espermiograma.vigor != null));
+
+      if (!conData.length) {
+        wrap.innerHTML = '<div class="chart-empty">Sin datos de espermiograma</div>';
+        legend.innerHTML = '';
+        return;
+      }
+      if (!wrap.querySelector('canvas')) {
+        wrap.innerHTML = '<canvas id="chartClinico" role="img" aria-label="Gráfica de barras de promedios clínicos por hacienda"></canvas>';
+      }
+
+      // Agrupar por hacienda
+      const grupos = {};
+      conData.forEach(c => {
+        const hName = c.toros?.haciendas?.nombre || 'Sin hacienda';
+        if (!grupos[hName]) grupos[hName] = { mt: [], mp: [], vg: [] };
+        if (c.espermiograma.motilidad_total != null)      grupos[hName].mt.push(c.espermiograma.motilidad_total);
+        if (c.espermiograma.motilidad_progresiva != null) grupos[hName].mp.push(c.espermiograma.motilidad_progresiva);
+        if (c.espermiograma.vigor != null)                grupos[hName].vg.push(c.espermiograma.vigor);
+      });
+
+      const avg = arr => arr.length ? Math.round((arr.reduce((a,b)=>a+b,0) / arr.length) * 10) / 10 : 0;
+
+      const haciendaNames = Object.keys(grupos).sort();
+      const mtData = haciendaNames.map(h => avg(grupos[h].mt));
+      const mpData = haciendaNames.map(h => avg(grupos[h].mp));
+      const vgData = haciendaNames.map(h => avg(grupos[h].vg) * 10); // escala 0-5 -> *10 para comparar visualmente con %
+
+      chartInstances.clin = new Chart(document.getElementById('chartClinico'), {
+        type: 'bar',
+        data: {
+          labels: haciendaNames,
+          datasets: [
+            { label: 'Motilidad total (%)',      data: mtData, backgroundColor: COLORS.carbon },
+            { label: 'Motilidad progresiva (%)', data: mpData, backgroundColor: COLORS.light },
+            { label: 'Vigor (×10)',              data: vgData, backgroundColor: COLORS.bone }
+          ]
+        },
+        options: {
+          indexAxis: haciendaNames.length > 4 ? 'y' : 'x',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: COLORS.cream } },
+            y: { grid: { display: false } }
+          }
+        }
+      });
+
+      legend.innerHTML = `
+        <span><span class="legend-dot" style="background:${COLORS.carbon}"></span>Motilidad total %</span>
+        <span><span class="legend-dot" style="background:${COLORS.light}"></span>Motilidad progresiva %</span>
+        <span><span class="legend-dot" style="background:${COLORS.bone}"></span>Vigor (×10, escala 0-50)</span>`;
+    }
+
+    // ── 5. RANKING DE CERTIFICADOS POR HACIENDA ──
+    function renderRankingHaciendas(certs) {
+      const wrap = document.getElementById('wrapRanking');
+
+      const counts = {};
+      certs.forEach(c => {
+        const h = c.toros?.haciendas?.nombre || 'Sin hacienda';
+        counts[h] = (counts[h] || 0) + 1;
+      });
+
+      const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 8);
+
+      if (!entries.length) {
+        wrap.innerHTML = '<div class="chart-empty">Sin certificados registrados</div>';
+        return;
+      }
+
+      const max = entries[0][1];
+      wrap.innerHTML = `<div class="ranking-list">${entries.map(([name, count]) => `
+        <div class="ranking-row">
+          <div class="ranking-name">${name}</div>
+          <div class="ranking-bar-bg"><div class="ranking-bar-fill" style="width:${(count/max*100).toFixed(0)}%"></div></div>
+          <div class="ranking-value">${count}</div>
+        </div>`).join('')}</div>`;
+    }
+
+    // ── 6. VENCIMIENTOS ──
+    function renderVencimientos(certs) {
+      const wrap = document.getElementById('wrapExpira');
+      const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+      const items = certs.map(c => {
+        if (!c.fecha || !c.validez_dias) return null;
+        const vence = new Date(c.fecha + 'T00:00:00');
+        vence.setDate(vence.getDate() + c.validez_dias);
+        const diffDias = Math.floor((vence - hoy) / (1000*60*60*24));
+        let estado = null;
+        if (diffDias < 0) estado = 'expirado';
+        else if (diffDias <= 7) estado = 'pronto';
+        if (!estado) return null;
+        return { id: c.id, toro: c.toros?.nombre || c.toros?.numero || '—', hacienda: c.toros?.haciendas?.nombre || '—', vence, estado, diffDias };
+      }).filter(Boolean).sort((a,b) => a.vence - b.vence);
+
+      // Actualizar métricas
+      const pronto = items.filter(i => i.estado === 'pronto').length;
+      const expirado = items.filter(i => i.estado === 'expirado').length;
+      document.getElementById('mPronto').textContent = pronto;
+      document.getElementById('mExpirados').textContent = expirado;
+
+      if (!items.length) {
+        wrap.innerHTML = '<div class="chart-empty">Todos los certificados están vigentes</div>';
+        return;
+      }
+
+      wrap.innerHTML = `<div class="expira-list">${items.slice(0, 10).map(i => {
+        const fechaTxt = i.vence.toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+        const label = i.estado === 'expirado' ? `Expiró ${fechaTxt}` : `Vence ${fechaTxt}`;
+        return `
+          <div class="expira-row" onclick="window.location='certificado-detalle.html?id=${i.id}'">
+            <div class="expira-toro">${i.toro}</div>
+            <div class="expira-hacienda">${i.hacienda}</div>
+            <div class="expira-fecha ${i.estado}">${label}</div>
+          </div>`;
+      }).join('')}</div>`;
+    }
+
+    init();
+  </script>
+</body>
+</html>
