@@ -261,13 +261,9 @@
       .toro-meta { font-size: 7.5pt !important; }
       .toro-link { display: none !important; }
 
-      /* Sección de archivos: fluye normal sin forzar salto */
-      .section:has(.media-grid) {
-        border: none !important;
-        margin-top: 10pt !important;
-      }
-      .section:has(.media-grid) .section-header { display: none !important; }
-      .section:has(.media-grid) .section-body { padding: 0 !important; }
+      /* Sección de archivos: igual que las demás */
+      .section:has(.media-grid) .section-header { display: block !important; }
+      .section:has(.media-grid) .section-body { padding: 10pt 12pt !important; }
 
       /* Imágenes: cada una con descripción a la derecha en PDF */
       .media-grid { display: block !important; }
