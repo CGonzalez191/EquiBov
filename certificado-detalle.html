@@ -55,6 +55,7 @@
     .media-thumb { width: 100%; aspect-ratio: 1; overflow: hidden; background: var(--cream); }
     .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
     .media-caption { font-size: 9px; color: var(--carbon); padding: 6px 8px; line-height: 1.4; letter-spacing: 0.03em; }
+    .media-caption-label { display: block; font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid); margin-bottom: 2px; }
 
     .side-card { background: var(--white); border: 1px solid var(--bone); border-radius: 3px; margin-bottom: 16px; overflow: hidden; opacity: 0; animation: fadeUp 0.4s ease 0.2s forwards; }
     .side-card-header { padding: 14px 20px; border-bottom: 1px solid var(--bone); }
@@ -306,6 +307,14 @@
         line-height: 1.5 !important;
         padding: 0 !important;
       }
+      .media-caption-label {
+        font-size: 6.5pt !important;
+        letter-spacing: 0.18em !important;
+        text-transform: uppercase !important;
+        color: #5F5E5A !important;
+        display: block !important;
+        margin-bottom: 2pt !important;
+      }
 
       /* Pie de página */
       .print-footer {
@@ -538,7 +547,7 @@
                   ${archivos.slice(0, 12).map(a => `
                     <div class="media-item" onclick="openLightbox('${a.url}', '${a.tipo}')">
                       <div class="media-thumb">${a.tipo === 'video' ? `<video src="${a.url}" muted></video>` : `<img src="${a.url}" alt="archivo" />`}</div>
-                      ${a.descripcion ? `<div class="media-caption">${escHtml(a.descripcion)}</div>` : ''}
+                      ${a.descripcion ? `<div class="media-caption"><span class="media-caption-label">Descripción</span>${escHtml(a.descripcion)}</div>` : ''}
                     </div>`).join('')}
                     ${archivos.length > 12 ? `<div class="empty-state print-hidden" style="grid-column:1/-1;padding:12px;font-size:10px;">+${archivos.length - 12} archivos m&aacute;s</div>` : ''}
                 </div>
