@@ -268,32 +268,33 @@
       .section:has(.media-grid) .section-header { display: none !important; }
       .section:has(.media-grid) .section-body { padding: 0 !important; }
 
-      /* Imágenes: cada una ocupa su propia página si no cabe */
-      .media-grid { display: block !important; }
+      /* Imágenes: grid de 2 columnas en PDF */
+      .media-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8pt !important;
+      }
 
       .media-item {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: flex-start !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        aspect-ratio: unset !important;
+        justify-content: center !important;
         border: none !important;
         background: none !important;
-        width: 100% !important;
-        margin-bottom: 12pt !important;
+        margin: 0 !important;
         padding: 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
 
       .media-item img {
         max-width: 100% !important;
-        max-height: 20cm !important;
+        max-height: 7cm !important;
         width: auto !important;
         height: auto !important;
         object-fit: contain !important;
         display: block !important;
-        margin: 0 auto !important;
         border: 1px solid #D3D1C7 !important;
         border-radius: 2pt !important;
       }
