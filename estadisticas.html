@@ -544,8 +544,8 @@
       const wrap = document.getElementById('wrapDefectos');
       const legend = document.getElementById('legendDefectos');
 
-      const conDefectos = dataA.filter(c => c.espermiograma?.total_defectos != null);
-      const conDefectosB = dataB ? dataB.filter(c => c.espermiograma?.total_defectos != null) : [];
+      const conDefectos = dataA.filter(c => c.espermiograma?.[0]?.total_defectos != null);
+      const conDefectosB = dataB ? dataB.filter(c => c.espermiograma?.[0]?.total_defectos != null) : [];
 
       if (!conDefectos.length && !conDefectosB.length) {
         wrap.innerHTML = '<div class="chart-empty">Sin datos de espermiograma en este periodo</div>';
@@ -558,7 +558,7 @@
 
       const toSeries = arr => arr.map(c => ({
         x: c.fecha,
-        y: Math.round((c.espermiograma.total_defectos || 0) * 100 * 100) / 100
+        y: Math.round((c.espermiograma?.[0]?.total_defectos || 0) * 100 * 100) / 100
       }));
 
       const seriesA = toSeries(conDefectos);
@@ -611,7 +611,7 @@
       const wrap = document.getElementById('wrapClinico');
       const legend = document.getElementById('legendClinico');
 
-      const conData = certs.filter(c => c.espermiograma && (c.espermiograma.motilidad_total != null || c.espermiograma.vigor != null));
+      const conData = certs.filter(c => c.espermiograma?.[0] && (c.espermiograma[0].motilidad_total != null || c.espermiograma[0].vigor != null));
 
       if (!conData.length) {
         wrap.innerHTML = '<div class="chart-empty">Sin datos de espermiograma</div>';
@@ -627,9 +627,9 @@
       conData.forEach(c => {
         const hName = c.toros?.haciendas?.nombre || 'Sin hacienda';
         if (!grupos[hName]) grupos[hName] = { mt: [], mp: [], vg: [] };
-        if (c.espermiograma.motilidad_total != null)      grupos[hName].mt.push(c.espermiograma.motilidad_total);
-        if (c.espermiograma.motilidad_progresiva != null) grupos[hName].mp.push(c.espermiograma.motilidad_progresiva);
-        if (c.espermiograma.vigor != null)                grupos[hName].vg.push(c.espermiograma.vigor);
+        if (c.espermiograma[0].motilidad_total != null)      grupos[hName].mt.push(c.espermiograma[0].motilidad_total);
+        if (c.espermiograma[0].motilidad_progresiva != null) grupos[hName].mp.push(c.espermiograma[0].motilidad_progresiva);
+        if (c.espermiograma[0].vigor != null)                grupos[hName].vg.push(c.espermiograma[0].vigor);
       });
 
       const avg = arr => arr.length ? Math.round((arr.reduce((a,b)=>a+b,0) / arr.length) * 10) / 10 : 0;
