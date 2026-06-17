@@ -404,14 +404,14 @@
         let dataB = null;
         if (comparar) dataB = await fetchPeriodo(haciendaId, desde2, hasta2);
 
-        // Datos generales (no dependen de fecha): vencimientos, ranking por hacienda, toros para promedio clínico
-        const dataGeneral = await fetchGeneral(haciendaId);
+        // Datos generales (sin filtro de hacienda): vencimientos, ranking por hacienda, promedios clínicos
+        const dataGeneral = await fetchGeneral();
 
         renderMetricas(dataA);
         renderDiagnostico(dataA);
         renderCertificadosPorMes(dataA, dataB, comparar);
         renderTendenciaDefectos(dataA, dataB, comparar);
-        renderPromediosClinico(dataGeneral.certificadosTodos, haciendaId);
+        renderPromediosClinico(dataGeneral.certificadosTodos);
         renderRankingHaciendas(dataGeneral.certificadosTodos);
         renderVencimientos(dataGeneral.certificadosTodos);
 
@@ -441,14 +441,13 @@
       return data || [];
     }
 
-    // ── FETCH: datos generales (sin filtro de fecha, para vencimientos y rankings) ──
-    async function fetchGeneral(haciendaId) {
+    // ── FETCH: datos generales (sin filtro de hacienda, para vencimientos, rankings y promedios) ──
+    async function fetchGeneral() {
       let q = sb.from('certificados').select(`
         id, fecha, conclusion, validez_dias,
         toros!inner ( id, nombre, numero, hacienda_id, haciendas ( id, nombre ) ),
         espermiograma ( motilidad_total, motilidad_progresiva, vigor )
       `);
-      if (haciendaId) q = q.eq('toros.hacienda_id', haciendaId);
       const { data, error } = await q.order('fecha', { ascending: false });
       if (error) { console.error(error); return { certificadosTodos: [] }; }
       return { certificadosTodos: data || [] };
@@ -644,7 +643,7 @@
     }
 
     // ── 4. PROMEDIOS CLÍNICOS POR HACIENDA ──
-    function renderPromediosClinico(certs, haciendaId) {
+    function renderPromediosClinico(certs) {
       destroyChart('clin');
       const wrap = document.getElementById('wrapClinico');
       const legend = document.getElementById('legendClinico');
