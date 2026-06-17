@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EQUIBOV — Estadísticas</title>
+  <title>EQUIBOV</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="img/torito.png" />
   <link href="css/equibov.css?v=1" rel="stylesheet" />
@@ -130,12 +130,13 @@
 
     .loading-state { padding: 40px; text-align: center; font-size: 11px; color: var(--light); letter-spacing: 0.1em; animation: pulse 1.4s ease infinite; }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 1200px) {
       .metrics-grid { grid-template-columns: repeat(2, 1fr); }
       .charts-grid { grid-template-columns: 1fr; }
       .chart-card.full { grid-column: 1; }
       .chart-wrap { height: 200px; }
       .chart-wrap.tall { height: 260px; }
+      .chart-card { padding: 18px; }
     }
     @media (max-width: 768px) {
       .metrics-grid { grid-template-columns: 1fr; }
@@ -302,6 +303,7 @@
       const w = window.innerWidth;
       if (w < 480) return 8;
       if (w < 768) return 9;
+      if (w < 1200) return 9;
       return 10;
     }
 
