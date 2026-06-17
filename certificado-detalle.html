@@ -316,18 +316,6 @@
         margin-bottom: 2pt !important;
       }
 
-      /* Pie de página */
-      .print-footer {
-        display: block !important;
-        margin-top: 20pt;
-        padding-top: 10pt;
-        border-top: 1px solid #C8D6E5;
-        font-size: 7pt;
-        color: #B4B2A9;
-        text-align: center;
-        letter-spacing: 0.1em;
-      }
-
       /* Saltos de página */
       .section:nth-child(n+4) { page-break-before: auto; }
       .section { page-break-inside: avoid; }
@@ -585,12 +573,7 @@
                 </div>
               </div>
             </div><!-- /side-col -->
-        </div><!-- /content-grid -->
-
-        <!-- PIE SOLO VISIBLE AL IMPRIMIR -->
-        <div class="print-footer">
-          EQUIBOV — Sistema de Gestión Andrológica Bovina · Documento generado el ${new Date().toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' })}
-        </div>`;
+        </div><!-- /content-grid -->`;
 
       document.getElementById('btnLogout').addEventListener('click', logout);
     }
