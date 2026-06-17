@@ -50,10 +50,11 @@
     .bar-fill { height: 100%; background: var(--carbon); border-radius: 2px; transition: width 0.5s ease; }
 
     .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-    .media-item { position: relative; border: 1px solid var(--bone); border-radius: 2px; overflow: hidden; aspect-ratio: 1; cursor: pointer; background: var(--cream); transition: border-color 0.2s; }
+    .media-item { border: 1px solid var(--bone); border-radius: 2px; overflow: hidden; cursor: pointer; background: var(--cream); transition: border-color 0.2s; }
     .media-item:hover { border-color: var(--carbon); }
-    .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
-    .media-item .media-type { position: absolute; top: 5px; left: 5px; background: rgba(44,44,42,0.7); color: var(--white); font-size: 8px; padding: 2px 6px; border-radius: 2px; letter-spacing: 0.08em; }
+    .media-thumb { width: 100%; aspect-ratio: 1; overflow: hidden; background: var(--cream); }
+    .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .media-caption { font-size: 9px; color: var(--carbon); padding: 6px 8px; line-height: 1.4; letter-spacing: 0.03em; }
 
     .side-card { background: var(--white); border: 1px solid var(--bone); border-radius: 3px; margin-bottom: 16px; overflow: hidden; opacity: 0; animation: fadeUp 0.4s ease 0.2s forwards; }
     .side-card-header { padding: 14px 20px; border-bottom: 1px solid var(--bone); }
@@ -268,28 +269,32 @@
       .section:has(.media-grid) .section-header { display: none !important; }
       .section:has(.media-grid) .section-body { padding: 0 !important; }
 
-      /* Imágenes: grid de 2 columnas en PDF */
-      .media-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 8pt !important;
-      }
+      /* Imágenes: cada una con descripción a la derecha en PDF */
+      .media-grid { display: block !important; }
 
       .media-item {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
+        display: grid !important;
+        grid-template-columns: auto 1fr !important;
+        gap: 10pt !important;
+        align-items: start !important;
         border: none !important;
         background: none !important;
-        margin: 0 !important;
+        margin: 0 0 8pt 0 !important;
         padding: 0 !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
       }
 
-      .media-item img {
-        max-width: 100% !important;
+      .media-thumb {
+        width: auto !important;
+        aspect-ratio: unset !important;
+        overflow: hidden !important;
+        background: none !important;
+        border-radius: 2pt !important;
+      }
+
+      .media-thumb img {
+        max-width: 7cm !important;
         max-height: 7cm !important;
         width: auto !important;
         height: auto !important;
@@ -299,7 +304,12 @@
 
       .media-item video { display: none !important; }
 
-      .media-item .media-type { display: none !important; }
+      .media-caption {
+        font-size: 8pt !important;
+        color: #2C2C2A !important;
+        line-height: 1.5 !important;
+        padding: 0 !important;
+      }
 
       /* Pie de página */
       .print-footer {
@@ -387,6 +397,7 @@
     }
 
     function fmt(v, suffix = '') { return (v !== null && v !== undefined && v !== '') ? `${v}${suffix}` : '&mdash;'; }
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function fmtDate(d) {
       if (!d) return '&mdash;';
       return new Date(d + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -530,8 +541,8 @@
                 <div class="media-grid">
                   ${archivos.slice(0, 12).map(a => `
                     <div class="media-item" onclick="openLightbox('${a.url}', '${a.tipo}')">
-                      ${a.tipo === 'video' ? `<video src="${a.url}" muted></video>` : `<img src="${a.url}" alt="archivo" />`}
-                      <span class="media-type">${a.tipo}</span>
+                      <div class="media-thumb">${a.tipo === 'video' ? `<video src="${a.url}" muted></video>` : `<img src="${a.url}" alt="archivo" />`}</div>
+                      ${a.descripcion ? `<div class="media-caption">${escHtml(a.descripcion)}</div>` : ''}
                     </div>`).join('')}
                     ${archivos.length > 12 ? `<div class="empty-state print-hidden" style="grid-column:1/-1;padding:12px;font-size:10px;">+${archivos.length - 12} archivos m&aacute;s</div>` : ''}
                 </div>

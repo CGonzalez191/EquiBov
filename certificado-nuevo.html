@@ -84,11 +84,16 @@
     .upload-zone p { font-size: 11px; color: var(--mid); letter-spacing: 0.06em; }
     .upload-zone span { font-size: 9px; color: var(--light); display: block; margin-top: 4px; letter-spacing: 0.08em; }
 
-    .file-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 16px; }
-    .file-preview-item { position: relative; border: 1px solid var(--bone); border-radius: 2px; overflow: hidden; background: var(--cream); aspect-ratio: 1; }
-    .file-preview-item img, .file-preview-item video { width: 100%; height: 100%; object-fit: cover; }
-    .file-preview-item .file-name { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15,70,140,0.7); color: var(--white); font-size: 8px; padding: 3px 5px; letter-spacing: 0.05em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .file-preview-item .remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(15,70,140,0.7); color: var(--white); border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .file-preview-grid { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+    .file-preview-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--bone); border-radius: 2px; background: var(--cream); position: relative; }
+    .file-preview-thumb { width: 44px; height: 44px; border-radius: 2px; overflow: hidden; flex-shrink: 0; background: var(--white); }
+    .file-preview-thumb img, .file-preview-thumb video { width: 100%; height: 100%; object-fit: cover; }
+    .file-preview-info { flex: 1; min-width: 0; }
+    .file-preview-name { font-size: 10px; color: var(--carbon); margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-desc-input { width: 100%; border: none; border-bottom: 1px solid var(--bone); background: none; padding: 3px 0; font-family: 'Raleway', sans-serif; font-size: 10px; color: var(--carbon); outline: none; }
+    .file-desc-input:focus { border-bottom-color: var(--primary); }
+    .file-desc-input::placeholder { color: var(--light); }
+    .file-preview-item .remove-btn { flex-shrink: 0; background: rgba(15,70,140,0.7); color: var(--white); border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
 
     .conclusion-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
     .conclusion-opt { border: 1px solid var(--bone); border-radius: 2px; padding: 14px 12px; text-align: center; cursor: pointer; transition: all 0.15s; font-size: 10px; letter-spacing: 0.1em; color: var(--mid); }
@@ -846,6 +851,8 @@
       renderFilePreviews();
     }
 
+    const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
     function renderFilePreviews() {
       const grid = document.getElementById('filePreviewGrid');
       let html = '';
@@ -853,8 +860,11 @@
         if (removedFileIds.has(String(f.id))) return;
         const isVideo = f.tipo === 'video';
         html += `<div class="file-preview-item">
-          ${isVideo ? `<video src="${f.url}" muted></video>` : `<img src="${f.url}" alt="" />`}
-          <div class="file-name">${f.storage_path.split('/').pop()}</div>
+          <div class="file-preview-thumb">${isVideo ? `<video src="${f.url}" muted></video>` : `<img src="${f.url}" alt="" />`}</div>
+          <div class="file-preview-info">
+            <div class="file-preview-name">${escHtml(f.storage_path.split('/').pop())}</div>
+            <input type="text" class="file-desc-input" data-file-id="${f.id}" value="${escHtml(f.descripcion || '')}" placeholder="Descripción..." />
+          </div>
           <button class="remove-btn" onclick="removeExistingFile('${f.id}')">&#10005;</button>
         </div>`;
       });
@@ -862,8 +872,11 @@
         const url = URL.createObjectURL(file);
         const isVideo = file.type.startsWith('video/');
         html += `<div class="file-preview-item">
-          ${isVideo ? `<video src="${url}" muted></video>` : `<img src="${url}" alt="${file.name}" />`}
-          <div class="file-name">${file.name}</div>
+          <div class="file-preview-thumb">${isVideo ? `<video src="${url}" muted></video>` : `<img src="${url}" alt="${escHtml(file.name)}" />`}</div>
+          <div class="file-preview-info">
+            <div class="file-preview-name">${escHtml(file.name)}</div>
+            <input type="text" class="file-desc-input" data-file-idx="${i}" value="" placeholder="Descripción..." />
+          </div>
           <button class="remove-btn" onclick="selectedFiles.splice(${i},1);renderFilePreviews()">&#10005;</button>
         </div>`;
       });
@@ -1041,7 +1054,22 @@
           }
         }
 
-        for (const file of selectedFiles) {
+        // Guardar descripciones de archivos existentes
+        document.querySelectorAll('.file-desc-input[data-file-id]').forEach(async inp => {
+          const id = inp.dataset.fileId;
+          if (!id || removedFileIds.has(id)) return;
+          const desc = inp.value.trim() || null;
+          const { error: descErr } = await sb.from('archivos_examen').update({ descripcion: desc }).eq('id', id);
+          if (descErr) throw descErr;
+        });
+
+        // Recoger descripciones de archivos nuevos
+        const newDescs = {};
+        document.querySelectorAll('.file-desc-input[data-file-idx]').forEach(inp => {
+          newDescs[inp.dataset.fileIdx] = inp.value.trim() || null;
+        });
+
+        for (const [i, file] of selectedFiles.entries()) {
           const path = `${currentUser.id}/${certId}/${Date.now()}_${file.name}`;
           const { error: upErr } = await sb.storage
             .from('examenes-archivos')
@@ -1053,7 +1081,8 @@
               tipo:           file.type.startsWith('video/') ? 'video' : 'imagen',
               storage_path:   path,
               url:            urlData?.publicUrl || null,
-              tamano_bytes:   file.size
+              tamano_bytes:   file.size,
+              descripcion:    newDescs[i] || null
             });
           }
         }
