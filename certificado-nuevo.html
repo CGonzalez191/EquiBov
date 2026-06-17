@@ -387,8 +387,12 @@
           </table>
         </div>
 
-        <div class="col-full" style="text-align:right;font-size:11px;color:var(--mid);padding-top:8px;">
-          Total defectos: <strong id="totalDefectos" style="color:var(--carbon);">0</strong>
+        <div class="col-full" style="display:flex;justify-content:space-between;font-size:11px;color:var(--mid);padding-top:8px;">
+          <span>Normales: <strong id="normales" style="color:var(--carbon);">100.00</strong>%</span>
+          <span>Total defectos: <strong id="totalDefectos" style="color:var(--carbon);">0.00</strong>%</span>
+        </div>
+        <div class="col-full" id="defectoWarning" style="display:none;text-align:center;font-size:10px;color:#d00;padding-top:4px;">
+          Límite de defectos alcanzado (máx 30%)
         </div>
       </div>
     </div>
@@ -656,7 +660,7 @@
             <input type="number" step="1" min="0" max="100"
               data-defecto="${d}" data-tipo="${tipo}"
               placeholder="0"
-              onchange="recalcTotales()" oninput="recalcTotales()" />
+              onchange="recalcTotales(this)" oninput="recalcTotales(this)" />
           </td>
         </tr>`).join('')}
       `;
@@ -671,13 +675,24 @@
       arrow.classList.toggle('collapsed', !collapsed);
     }
 
-    function recalcTotales() {
+    function recalcTotales(exceptInput) {
+      const MAX_DEFECTOS = 30;
       let sumMay = 0, sumMen = 0;
       document.querySelectorAll('input[data-tipo="mayor"]').forEach(i => { sumMay += parseFloat(i.value)||0; });
       document.querySelectorAll('input[data-tipo="menor"]').forEach(i => { sumMen += parseFloat(i.value)||0; });
+      const total = sumMay + sumMen;
+      if (total > MAX_DEFECTOS && exceptInput) {
+        const others = total - (parseFloat(exceptInput.value)||0);
+        const maxForThis = Math.max(0, MAX_DEFECTOS - others);
+        exceptInput.value = Math.min(maxForThis, parseFloat(exceptInput.value)||0);
+        return recalcTotales();
+      }
       document.getElementById('totalMayores').textContent  = sumMay.toFixed(2);
       document.getElementById('totalMenores').textContent  = sumMen.toFixed(2);
-      document.getElementById('totalDefectos').textContent = (sumMay + sumMen).toFixed(2);
+      document.getElementById('totalDefectos').textContent = total.toFixed(2);
+      document.getElementById('normales').textContent      = (100 - total).toFixed(2);
+      const warn = document.getElementById('defectoWarning');
+      if (total >= MAX_DEFECTOS) { warn.style.display = 'block'; } else { warn.style.display = 'none'; }
     }
 
     function setVal(id, val) {
