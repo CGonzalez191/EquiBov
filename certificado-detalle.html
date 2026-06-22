@@ -320,6 +320,55 @@
       .section:nth-child(n+4) { page-break-before: auto; }
       .section { page-break-inside: avoid; }
     }
+
+    /* ── CAPTURA HTML2PDF ── */
+    .pdf-mode * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .pdf-mode .print-header { display: flex !important; align-items: center; justify-content: space-between; padding-bottom: 14pt; margin-bottom: 18pt; border-bottom: 2px solid #0F468C; }
+    .pdf-mode .print-header-brand h1 { font-family: 'SOMER', serif; font-size: 28pt; font-weight: 600; color: #0F468C; line-height: 1; letter-spacing: -0.02em; }
+    .pdf-mode .print-header-brand p { font-size: 7pt; letter-spacing: 0.2em; text-transform: uppercase; color: #5F5E5A; margin-top: 3pt; }
+    .pdf-mode .print-header-right { text-align: right; font-size: 7.5pt; color: #5F5E5A; letter-spacing: 0.06em; line-height: 1.7; }
+    .pdf-mode .print-header-right strong { font-size: 9pt; color: #0F468C; display: block; letter-spacing: 0.1em; text-transform: uppercase; }
+    .pdf-mode .sidebar, .pdf-mode .hamburger, .pdf-mode .sidebar-overlay,
+    .pdf-mode .toast, .pdf-mode .header-actions, .pdf-mode .breadcrumb,
+    .pdf-mode #lightbox, .pdf-mode .modal-overlay,
+    .pdf-mode .toro-link, .pdf-mode .print-hidden { display: none !important; }
+    .pdf-mode .main { margin: 0 !important; padding: 0 !important; }
+    .pdf-mode .content-grid { display: block !important; gap: 0 !important; }
+    .pdf-mode .side-col { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10pt !important; margin-bottom: 14pt !important; }
+    .pdf-mode .side-card { margin-bottom: 0 !important; border: 1px solid #C8D6E5 !important; border-radius: 2pt !important; }
+    .pdf-mode .section { border: 1px solid #C8D6E5 !important; border-radius: 2pt !important; margin-bottom: 10pt !important; }
+    .pdf-mode .section-header { padding: 7pt 12pt !important; background: #F0F4F8 !important; }
+    .pdf-mode .section-header h3 { font-size: 7pt !important; letter-spacing: 0.2em !important; }
+    .pdf-mode .section-body { padding: 10pt 12pt !important; }
+    .pdf-mode .data-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 10pt !important; }
+    .pdf-mode .data-grid-2 { grid-template-columns: repeat(2, 1fr) !important; gap: 10pt !important; }
+    .pdf-mode .data-label { font-size: 6.5pt !important; letter-spacing: 0.18em !important; margin-bottom: 3pt !important; }
+    .pdf-mode .data-value { font-size: 9pt !important; }
+    .pdf-mode .data-value.large { font-size: 14pt !important; }
+    .pdf-mode .def-table th { font-size: 6.5pt !important; padding: 4pt 6pt !important; }
+    .pdf-mode .def-table td { font-size: 7.5pt !important; padding: 2.5pt 6pt !important; }
+    .pdf-mode .bar-cell, .pdf-mode .bar-bg, .pdf-mode .bar-fill { display: none !important; }
+    .pdf-mode .def-total td { font-size: 7.5pt !important; padding: 3pt 6pt !important; }
+    .pdf-mode .def-subhead td { font-size: 6.5pt !important; padding: 6pt 6pt 2pt !important; }
+    .pdf-mode .def-sep { display: none !important; }
+    .pdf-mode .side-card-header { padding: 7pt 12pt !important; background: #F0F4F8 !important; }
+    .pdf-mode .conclusion-badge { font-size: 8pt !important; padding: 4pt 8pt !important; }
+    .pdf-mode .conclusion-text { font-size: 8.5pt !important; line-height: 1.5 !important; }
+    .pdf-mode .validez-info { font-size: 7.5pt !important; }
+    .pdf-mode .toro-name { font-size: 13pt !important; }
+    .pdf-mode .toro-meta { font-size: 7.5pt !important; }
+    .pdf-mode .section:has(.media-grid) .section-header { display: block !important; }
+    .pdf-mode .section:has(.media-grid) .section-body { padding: 10pt 12pt !important; }
+    .pdf-mode .media-grid { display: block !important; }
+    .pdf-mode .media-item { display: grid !important; grid-template-columns: auto 1fr !important; gap: 10pt !important; align-items: start !important; border: none !important; background: none !important; margin: 0 0 8pt 0 !important; padding: 0 !important; }
+    .pdf-mode .media-thumb { width: auto !important; aspect-ratio: unset !important; overflow: hidden !important; background: none !important; border-radius: 2pt !important; }
+    .pdf-mode .media-thumb img { max-width: 7cm !important; max-height: 7cm !important; width: auto !important; height: auto !important; object-fit: contain !important; display: block !important; }
+    .pdf-mode .media-item video { display: none !important; }
+    .pdf-mode .media-caption { font-size: 8pt !important; color: #1C1C1E !important; line-height: 1.5 !important; padding: 0 !important; }
+    .pdf-mode .media-caption-label { font-size: 6.5pt !important; letter-spacing: 0.18em !important; text-transform: uppercase !important; color: #5F5E5A !important; display: block !important; margin-bottom: 2pt !important; }
+    .pdf-mode .page-header { margin-bottom: 14pt !important; }
+    .pdf-mode .page-header-left h2 { font-size: 16pt !important; color: #1C1C1E !important; }
+    .pdf-mode .page-header-left p { font-size: 8pt !important; color: #5F5E5A !important; }
   </style>
 </head>
 <body>
@@ -333,6 +382,7 @@
     <div id="lightboxContent"></div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=1"></script>
   <script src="js/sidebar.js?v=1"></script>
@@ -443,6 +493,7 @@
             <a href="certificado-nuevo.html?toro=${toro?.id}" class="btn-secondary">+ Nuevo examen</a>
             <a href="certificado-nuevo.html?id=${cert.id}" class="btn-secondary">Editar</a>
             <button class="btn-secondary" onclick="window.print()">Imprimir / PDF</button>
+            <button class="btn-secondary" onclick="downloadPDF()">Descargar PDF</button>
             <button class="btn-danger" onclick="deleteCert('${cert.id}')">Eliminar</button>
           </div>
         </div>
@@ -638,6 +689,26 @@
         document.getElementById('lightboxContent').innerHTML = '';
       }
     });
+
+    function downloadPDF() {
+      const main = document.getElementById('mainContent');
+      const html = document.documentElement;
+      const toro = certData?.cert?.toros;
+      const parts = [toro?.numero ? `#${toro.numero}` : '', toro?.nombre || ''].filter(Boolean);
+      const label = parts.length ? parts.join('-') : 'Certificado';
+      const filename = `Toro-${label}-Certificado.pdf`.replace(/[/\\?%*:|"<>]/g, '');
+
+      html.classList.add('pdf-mode');
+
+      setTimeout(() => {
+        html2pdf()
+          .set({ margin: [1.8, 1.6, 1.8, 1.6], filename, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' } })
+          .from(main)
+          .save()
+          .then(() => html.classList.remove('pdf-mode'))
+          .catch(() => html.classList.remove('pdf-mode'));
+      }, 200);
+    }
 
     async function deleteCert(id) {
       const ok = await showConfirm('&iquest;Eliminar este certificado?<br>Se eliminar&aacute;n tambi&eacute;n los archivos adjuntos.');
