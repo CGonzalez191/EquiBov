@@ -450,28 +450,6 @@
           <label class="field-label">Observaciones ecogr&aacute;ficas</label>
           <textarea class="field-input" id="dObservaciones" placeholder="Hallazgos relevantes en la ultrasonograf&iacute;a..."></textarea>
         </div>
-
-        <div class="subsection-title">iSperm mCASA (opcional)</div>
-        <div class="field-group">
-          <label class="field-label">Motilidad total iSperm (%)</label>
-          <input class="field-input" type="number" step="0.1" id="iMotTotal" placeholder="&mdash;" />
-        </div>
-        <div class="field-group">
-          <label class="field-label">Motilidad progresiva iSperm (%)</label>
-          <input class="field-input" type="number" step="0.1" id="iMotProg" placeholder="&mdash;" />
-        </div>
-        <div class="field-group">
-          <label class="field-label">VCL (&micro;m/s)</label>
-          <input class="field-input" type="number" step="0.1" id="iVCL" placeholder="&mdash;" />
-        </div>
-        <div class="field-group">
-          <label class="field-label">VSL (&micro;m/s)</label>
-          <input class="field-input" type="number" step="0.1" id="iVSL" placeholder="&mdash;" />
-        </div>
-        <div class="field-group">
-          <label class="field-label">VAP (&micro;m/s)</label>
-          <input class="field-input" type="number" step="0.1" id="iVAP" placeholder="&mdash;" />
-        </div>
       </div>
     </div>
 
@@ -791,14 +769,6 @@
       setVal('dPuntos', cp.puntos_hiperecogenicos);
       setVal('dObservaciones', cp.observaciones_eco);
 
-      if (cp.isperm_resultados) {
-        setVal('iMotTotal', cp.isperm_resultados.MotTotal);
-        setVal('iMotProg', cp.isperm_resultados.MotProg);
-        setVal('iVCL', cp.isperm_resultados.VCL);
-        setVal('iVSL', cp.isperm_resultados.VSL);
-        setVal('iVAP', cp.isperm_resultados.VAP);
-      }
-
       document.getElementById('conclTexto').value = cert.conclusion || '';
       const conclTipo = getConclusionTipo(cert.conclusion);
       if (conclTipo) {
@@ -1025,20 +995,13 @@
           total_defectos:          (parseFloat(document.getElementById('totalDefectos').textContent) || 0) / 100
         };
 
-        const isperm = {};
-        ['iMotTotal','iMotProg','iVCL','iVSL','iVAP'].forEach(id => {
-          const v = parseFloat(document.getElementById(id).value);
-          if (v) isperm[id.replace('i','')] = v;
-        });
-
         const compPayload = {
           certificado_id:           certId,
           integridad_con:           parseFloat(document.getElementById('dConIntegridad').value) || null,
           integridad_sin:           parseFloat(document.getElementById('dSinIntegridad').value) || null,
           homogeneidad_parenquima:  parseInt(document.getElementById('dHomogeneidad').value),
           puntos_hiperecogenicos:   parseInt(document.getElementById('dPuntos').value),
-          observaciones_eco:        document.getElementById('dObservaciones').value.trim() || null,
-          isperm_resultados:        isperm
+          observaciones_eco:        document.getElementById('dObservaciones').value.trim() || null
         };
 
         if (editingId) {

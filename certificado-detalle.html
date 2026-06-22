@@ -523,7 +523,6 @@
                   <div class="data-field"><div class="data-label">Puntos hiperecog&eacute;nicos</div><div class="data-value">${fmt(comp.puntos_hiperecogenicos)}</div></div>
                 </div>
                 ${comp.observaciones_eco ? `<div class="data-field" style="grid-column:1/-1;"><div class="data-label" style="margin-bottom:6px;">Observaciones ecogr&aacute;ficas</div><div class="data-value" style="line-height:1.6;">${comp.observaciones_eco}</div></div>` : ''}
-                ${renderISperm(comp.isperm_resultados)}
               </div>
             </div>` : ''}
 
@@ -613,19 +612,6 @@
           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mid);margin-top:8px;">
             <span>Normales: <strong style="color:var(--carbon);">${((1-totalDef)*100).toFixed(2)}%</strong></span>
             <span>Total defectos: <strong style="color:var(--carbon);">${(totalDef*100).toFixed(2)}%</strong></span>
-          </div>
-        </div>`;
-    }
-
-    function renderISperm(data) {
-      if (!data || !Object.keys(data).length) return '';
-      return `
-        <div style="margin-top:16px;">
-          <div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--mid);margin-bottom:12px;padding-bottom:8px;border-top:1px solid var(--bone);padding-top:16px;">iSperm mCASA</div>
-          <div class="data-grid">
-            ${Object.entries(data).map(([k,v]) =>
-              `<div class="data-field"><div class="data-label">${k}</div><div class="data-value">${v}</div></div>`
-            ).join('')}
           </div>
         </div>`;
     }
