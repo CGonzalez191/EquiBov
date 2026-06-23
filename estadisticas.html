@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EQUIBOV</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="img/torito.png" />
   <link href="css/equibov.css?v=1" rel="stylesheet" />
   <style>
@@ -25,13 +25,13 @@
     .filter-field { display: flex; flex-direction: column; gap: 6px; }
     .filter-field label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid); }
     .filter-field select, .filter-field input {
+      appearance: none; -webkit-appearance: none;
       background: var(--cream); border: 1px solid var(--bone); border-radius: 2px;
-      padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 12px;
+      padding: 9px 12px; font-family: 'Inter', sans-serif; font-size: 12px;
       color: var(--carbon); outline: none; transition: border-color 0.2s, background 0.2s;
       min-width: 150px;
     }
-    .filter-field select:focus, .filter-field input:focus { border-color: var(--carbon); background: var(--white); }
-    .filter-field select { cursor: pointer; }
+    .filter-field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235F5E5A' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 10px; padding-right: 32px; cursor: pointer; }
 
     .compare-toggle {
       display: flex; align-items: center; gap: 8px;
@@ -54,7 +54,7 @@
     }
 
     .btn-apply {
-      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+      font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
       background: var(--carbon); color: var(--white); border: none;
       padding: 10px 22px; border-radius: 2px; cursor: pointer; transition: background 0.2s;
     }
@@ -75,7 +75,7 @@
     .metric-card:nth-child(3) { animation-delay: 0.22s; }
     .metric-card:nth-child(4) { animation-delay: 0.28s; }
     .metric-label { font-size: 9px; letter-spacing: 0.2em; color: var(--mid); text-transform: uppercase; margin-bottom: 10px; }
-    .metric-value { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 500; color: var(--carbon); line-height: 1; }
+    .metric-value { font-family: 'Inter', sans-serif; font-size: 38px; font-weight: 500; color: var(--carbon); line-height: 1; }
     .metric-value.warn { color: #8B5E1A; }
     .metric-value.danger { color: #8B2E2E; }
     .metric-sub { font-size: 10px; color: var(--light); margin-top: 6px; letter-spacing: 0.05em; }
@@ -307,7 +307,7 @@
       return 10;
     }
 
-    Chart.defaults.font.family = "'DM Mono', monospace";
+    Chart.defaults.font.family = "'Inter', sans-serif";
     Chart.defaults.font.size = chartFontSize();
     Chart.defaults.color = '#5F5E5A';
 

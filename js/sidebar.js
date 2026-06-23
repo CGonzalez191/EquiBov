@@ -31,7 +31,7 @@ function createSidebar(active) {
       <span></span><span></span><span></span>
     </button>
     <div class="sidebar-brand">
-      <img class="sidebar-logo" src="img/torito.png" alt="EquiBov" />
+      <img class="sidebar-logo" src="img/10.PNG" alt="EquiBov" />
       <h1>EQUIBOV</h1>
       <span>Androlog&iacute;a Bovina</span>
     </div>
