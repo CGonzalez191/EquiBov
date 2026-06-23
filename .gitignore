@@ -21,3 +21,6 @@ Desktop.ini
 tmp/
 temp/
 
+# Config
+js/config.js
+
