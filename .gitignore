@@ -20,3 +20,6 @@ Desktop.ini
 # Temp
 tmp/
 temp/
+
+# Config
+js/config.js
